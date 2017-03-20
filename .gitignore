@@ -7,3 +7,9 @@
 /build
 /captures
 .externalNativeBuild
+/distribution/opencv
+/distribution/tensorflow
+/gen-libs/build
+/gen-libs/src/main/cpp/opencv/src
+/gen-libs/src/main/cpp/opencv/tmp
+/gen-libs/src/main/cpp/tensorflow/src
