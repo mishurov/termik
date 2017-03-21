@@ -10,10 +10,10 @@ android {
         versionName "1.0"
         externalNativeBuild {
             cmake {
-                //targets "TensorFlow"
-                //abiFilters "x86_64"
-                targets "OpenCV"
-                abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"//, "armeabi", "mips", "mips64"
+                targets "TensorFlow"
+                abiFilters "x86_64"
+                //targets "OpenCV"
+                //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"//, "armeabi", "mips", "mips64"
                 //arguments "-GUnix Makefiles"
                 //arguments "-DCMAKE_MAKE_PROGRAM=make"
             }
