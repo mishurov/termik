@@ -9,7 +9,6 @@
 .externalNativeBuild
 /distribution/opencv
 /distribution/tensorflow
-/app/build
 /gen-libs/build
 /gen-libs/src/main/cpp/opencv/src
 /gen-libs/src/main/cpp/opencv/arm64-v8a
@@ -17,3 +16,6 @@
 /gen-libs/src/main/cpp/opencv/x86
 /gen-libs/src/main/cpp/opencv/x86_64
 /gen-libs/src/main/cpp/tensorflow/src
+/app/build
+/app/src/main/assets
+*.swp

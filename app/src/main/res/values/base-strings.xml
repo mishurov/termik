@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+ Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
+
 <resources>
-    <color name="control_background">#cc4285f4</color>
+    <string name="app_name">TensorFlow Demo</string>
+    <string name="activity_name_classification">TF Classify</string>
+    <string name="activity_name_detection">TF Detect</string>
+    <string name="activity_name_stylize">TF Stylize</string>
 </resources>

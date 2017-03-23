@@ -4,7 +4,8 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "uk.co.mishurov.catdetector"
+        applicationId "org.tensorflow.demo"
+        //applicationId "uk.co.mishurov.catdetector"
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
@@ -12,7 +13,8 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags ""
+                abiFilters "x86_64"
+                //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"//, "armeabi", "mips", "mips64"
             }
         }
     }
@@ -27,6 +29,46 @@ android {
             path "CMakeLists.txt"
         }
     }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    sourceSets {
+        main {
+            // TensorFlow Java API sources.
+            java {
+                srcDir '../distribution/tensorflow/tensorflow/tensorflow/java/src/main/java'
+                exclude '**/examples/**'
+            }
+            // Android TensorFlow wrappers, etc.
+            java {
+                srcDir '../distribution/tensorflow/tensorflow/tensorflow/contrib/android/java'
+            }
+
+            java {
+                srcDir 'src/main/java'
+            }
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['src/main/res']
+            assets.srcDirs = ['src/main/assets']
+            jniLibs.srcDirs = [
+                '../distribution/tensorflow/out/native/libtensorflow_inference.so',
+                '../distribution/tensorflow/out/native/libtensorflow_demo.so'
+            ]
+        }
+    }
+}
+
+task unzipAssets(type: Copy) {
+    from(zipTree('../distribution/tensorflow/out/tensorflow_demo.apk')) {
+        include 'assets/tensorflow_inception_graph.pb'
+        include 'assets/imagenet_comp_graph_label_strings.txt'
+    }
+    into 'src/main/'
 }
 
 dependencies {
