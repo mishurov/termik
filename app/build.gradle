@@ -45,6 +45,10 @@ android {
             java {
                 srcDir '../distribution/tensorflow/tensorflow/tensorflow/contrib/android/java'
             }
+            // Android TensorFlow demo.
+            java {
+                srcDir '../distribution/tensorflow/tensorflow/tensorflow/examples/android/src'
+            }
 
             java {
                 srcDir 'src/main/java'
