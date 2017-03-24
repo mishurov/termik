@@ -1,4 +1,4 @@
-package uk.co.mishurov.catdetector;
+package uk.co.mishurov.termik;
 
 import org.junit.Test;
 

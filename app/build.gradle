@@ -4,8 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "org.tensorflow.demo"
-        //applicationId "uk.co.mishurov.catdetector"
+        applicationId "uk.co.mishurov.termik"
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
@@ -13,7 +12,9 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                abiFilters "x86_64"
+                cppFlags "-frtti -fexceptions"
+                abiFilters "x86"
+                //abiFilters "armeabi-v7a"
                 //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"//, "armeabi", "mips", "mips64"
             }
         }
@@ -29,40 +30,27 @@ android {
             path "CMakeLists.txt"
         }
     }
-
+    /*
     lintOptions {
         abortOnError false
     }
-
+    */
     sourceSets {
         main {
-            // TensorFlow Java API sources.
-            java {
-                srcDir '../distribution/tensorflow/tensorflow/tensorflow/java/src/main/java'
-                exclude '**/examples/**'
-            }
-            // Android TensorFlow wrappers, etc.
-            java {
-                srcDir '../distribution/tensorflow/tensorflow/tensorflow/contrib/android/java'
-            }
-            // Android TensorFlow demo.
-            java {
-                srcDir '../distribution/tensorflow/tensorflow/tensorflow/examples/android/src'
-            }
-
             java {
                 srcDir 'src/main/java'
             }
             manifest.srcFile 'src/main/AndroidManifest.xml'
+            res.srcDirs = [
+                'src/main/res'
+            ]
+            assets.srcDirs = ['src/main/assets']
+            jniLibs.srcDirs = [
+                '../distribution/opencv/sdk/native/libs',
+            ]
             resources.srcDirs = ['src']
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
-            res.srcDirs = ['src/main/res']
-            assets.srcDirs = ['src/main/assets']
-            jniLibs.srcDirs = [
-                '../distribution/tensorflow/out/native/libtensorflow_inference.so',
-                '../distribution/tensorflow/out/native/libtensorflow_demo.so'
-            ]
         }
     }
 }
@@ -82,5 +70,6 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile project(':openCVLibrary320')
     testCompile 'junit:junit:4.12'
 }

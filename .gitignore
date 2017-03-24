@@ -11,11 +11,11 @@
 /distribution/tensorflow
 /gen-libs/build
 /gen-libs/src/main/cpp/opencv/src
-/gen-libs/src/main/cpp/opencv/arm64-v8a
-/gen-libs/src/main/cpp/opencv/armeabi-v7a
-/gen-libs/src/main/cpp/opencv/x86
-/gen-libs/src/main/cpp/opencv/x86_64
-/gen-libs/src/main/cpp/tensorflow/src
+/gen-libs/src/main/cpp/opencv/download
+/gen-libs/src/main/cpp/opencv/opencv_contrib
+/gen-libs/src/main/cpp/opencv/intermediates
+/gen-libs/src/main/cpp/tensorflow/download
 /app/build
 /app/src/main/assets
+/openCVLibrary320/build
 *.swp

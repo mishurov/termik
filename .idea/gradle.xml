@@ -8,7 +8,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/gen-libs" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/openCVLibrary320" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

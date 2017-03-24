@@ -1,4 +1,4 @@
-package uk.co.mishurov.catdetector;
+package uk.co.mishurov.termik;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("uk.co.mishurov.catdetector", appContext.getPackageName());
+        assertEquals("uk.co.mishurov.termik", appContext.getPackageName());
     }
 }

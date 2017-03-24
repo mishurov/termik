@@ -1,0 +1,39 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 25
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile '../distribution/opencv/sdk/java/AndroidManifest.xml'
+            java {
+                srcDir '../distribution/opencv/sdk/java/src'
+            }
+            res.srcDirs = [
+                '../distribution/opencv/sdk/java/res'
+            ]
+            jniLibs.srcDirs = [
+                '../distribution/opencv/sdk/native/libs',
+            ]
+            aidl.srcDirs = [
+                '../distribution/opencv/sdk/java/src'
+            ]
+            assets.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+        }
+    }
+}

@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/cat_detector.iml" filepath="$PROJECT_DIR$/cat_detector.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gen-libs/gen-libs.iml" filepath="$PROJECT_DIR$/gen-libs/gen-libs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/openCVLibrary320/openCVLibrary320.iml" filepath="$PROJECT_DIR$/openCVLibrary320/openCVLibrary320.iml" />
+      <module fileurl="file://$PROJECT_DIR$/termik.iml" filepath="$PROJECT_DIR$/termik.iml" />
     </modules>
   </component>
 </project>
