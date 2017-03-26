@@ -25,13 +25,13 @@ android {
             res.srcDirs = [
                 '../distribution/opencv/sdk/java/res'
             ]
-            jniLibs.srcDirs = [
-                '../distribution/opencv/sdk/native/libs',
-            ]
             aidl.srcDirs = [
                 '../distribution/opencv/sdk/java/src'
             ]
-            assets.srcDirs = ['src']
+            assets.srcDirs = [
+                '../distribution/opencv/sdk/java/src/assets'
+            ]
+            jniLibs.srcDirs = ['src']
             resources.srcDirs = ['src']
             renderscript.srcDirs = ['src']
         }
