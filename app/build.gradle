@@ -1,14 +1,18 @@
 apply plugin: 'com.android.application'
 
+def verCode = 1
+def verName = "1.0"
+def appId = "uk.co.mishurov.termik"
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "uk.co.mishurov.termik"
+        applicationId appId
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        versionCode verCode
+        versionName verName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -44,10 +48,10 @@ android {
             res.srcDirs = [
                 'src/main/res'
             ]
-            assets.srcDirs = ['src/main/assets']
             jniLibs.srcDirs = [
                 '../distribution/opencv/sdk/native/libs',
             ]
+            assets.srcDirs = ['src/main/assets']
             resources.srcDirs = ['src']
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
@@ -55,13 +59,59 @@ android {
     }
 }
 
+
 task unzipAssets(type: Copy) {
     from(zipTree('../distribution/tensorflow/out/tensorflow_demo.apk')) {
         include 'assets/tensorflow_inception_graph.pb'
         include 'assets/imagenet_comp_graph_label_strings.txt'
     }
-    into 'src/main/'
+    into 'build'
 }
+
+task zipAssets(type: Zip) {
+    destinationDir = file("build/obb")
+    entryCompression = ZipEntryCompression.STORED
+    from "build/assets"
+    Properties properties = new Properties()
+    baseName = "main.${verCode}.${appId}"
+    extension = "obb"
+}
+
+def getADBPath() {
+    def path
+    def localProperties = new File("local.properties")
+    if (localProperties.exists()) {
+        Properties properties = new Properties()
+        localProperties.withInputStream { instr ->
+            properties.load(instr)
+        }
+        def sdkDir = properties.getProperty('sdk.dir')
+        if (sdkDir) {
+            path = sdkDir
+        } else {
+            path = "$System.env.ANDROID_HOME"
+        }
+    } else {
+        path = "$System.env.ANDROID_HOME"
+    }
+
+    def adb = path + "/platform-tools/adb"
+    adb
+}
+
+task createOBBDir(type: Exec) {
+    def adb = getADBPath();
+    commandLine "$adb", 'shell', 'mkdir', '-p', "/mnt/sdcard/Android/obb/${appId}"
+}
+task uploadOBB(type: Exec) {
+    def adb = getADBPath();
+    commandLine "$adb", 'push', "build/obb/main.${verCode}.${appId}.obb", "/mnt/sdcard/Android/obb/${appId}"
+}
+
+unzipAssets.dependsOn clean
+zipAssets.dependsOn unzipAssets
+createOBBDir.dependsOn zipAssets
+uploadOBB.dependsOn createOBBDir
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
