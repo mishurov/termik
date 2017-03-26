@@ -28,11 +28,11 @@ else()
     set(WITH_IPP OFF)
 endif()
 
-# old ndk don't support
-if(${ANDROID_ABI} STREQUAL "armeabi")
-    set(ANDROID_NATIVE_API_LEVEL 19)
+# drop support arm without NEON
+if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+    set(CMAKE_ANDROID_ABI "armeabi-v7a with NEON")
 else()
-    set(ANDROID_NATIVE_API_LEVEL 23)
+    set(CMAKE_ANDROID_ABI ${ANDROID_ABI})
 endif()
 
 set(byproduct ${distribution_DIR}/opencv/sdk/native/libs/${ANDROID_ABI}/libopencv_highgui.a)
@@ -51,8 +51,8 @@ ExternalProject_Add(OpenCV_external
         -DOPENCV_EXTRA_MODULES_PATH=${contrib_modules_DIR}
         -DCMAKE_TOOLCHAIN_FILE=./platforms/android/android.toolchain.cmake
         -DANDROID_NDK=${ANDROID_NDK}
-        -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
-        -DANDROID_ABI=${ANDROID_ABI}
+        -DANDROID_NATIVE_API_LEVEL=19
+        -DANDROID_ABI=${CMAKE_ANDROID_ABI}
         -DBUILD_ANDROID_SERVICE=OFF
         -DBUILD_ANDROID_EXAMPLES=OFF
         -DWITH_IPP=${WITH_IPP}
