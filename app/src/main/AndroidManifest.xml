@@ -33,6 +33,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <receiver android:name=".AlarmReceiver" />
         <activity android:name=".MainActivity"
                   android:screenOrientation="landscape">
             <intent-filter>
