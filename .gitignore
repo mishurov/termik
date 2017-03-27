@@ -17,5 +17,7 @@
 /gen-libs/src/main/cpp/tensorflow/download
 /app/build
 /app/src/main/assets
-/openCVLibrary320/build
+/opencv/build
+/downloader/build
+/licensing/build
 *.swp

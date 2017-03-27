@@ -1,16 +1,37 @@
+import java.util.List;
 apply plugin: 'com.android.application'
 
 def verCode = 1
 def verName = "1.0"
 def appId = "uk.co.mishurov.termik"
 
+def getSdkDir() {
+    def path
+    def localProperties = new File("local.properties")
+    if (localProperties.exists()) {
+        Properties properties = new Properties()
+        localProperties.withInputStream { instr ->
+            properties.load(instr)
+        }
+        def sdkDir = properties.getProperty('sdk.dir')
+        if (sdkDir) {
+            path = sdkDir
+        } else {
+            path = "$System.env.ANDROID_HOME"
+        }
+    } else {
+        path = "$System.env.ANDROID_HOME"
+    }
+    return path
+}
+
 android {
-    compileSdkVersion 25
+    compileSdkVersion 22
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId appId
         minSdkVersion 19
-        targetSdkVersion 25
+        targetSdkVersion 22
         versionCode verCode
         versionName verName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -93,23 +114,7 @@ task zipAssets(type: Zip) {
 }
 
 def getADBPath() {
-    def path
-    def localProperties = new File("local.properties")
-    if (localProperties.exists()) {
-        Properties properties = new Properties()
-        localProperties.withInputStream { instr ->
-            properties.load(instr)
-        }
-        def sdkDir = properties.getProperty('sdk.dir')
-        if (sdkDir) {
-            path = sdkDir
-        } else {
-            path = "$System.env.ANDROID_HOME"
-        }
-    } else {
-        path = "$System.env.ANDROID_HOME"
-    }
-
+    def path = getSdkDir()
     def adb = path + "/platform-tools/adb"
     adb
 }
@@ -133,8 +138,9 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.3.0'
+    compile 'com.android.support:appcompat-v7:22.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile project(':openCVLibrary320')
+    compile project(':downloader')
+    compile project(':opencv')
     testCompile 'junit:junit:4.12'
 }
