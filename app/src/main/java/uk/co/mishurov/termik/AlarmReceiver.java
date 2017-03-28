@@ -1,4 +1,3 @@
-
 package uk.co.mishurov.termik;
 
 import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
@@ -24,7 +23,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             DownloaderClientMarshaller.startDownloadServiceIfRequired(context, intent, AssetDownloaderService.class);
         } catch (NameNotFoundException e) {
             e.printStackTrace();
-        }       
+        }
     }
-
 }
