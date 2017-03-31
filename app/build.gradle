@@ -103,6 +103,7 @@ task unzipAssets(type: Copy) {
     into 'build'
 }
 
+/*
 task zipAssets(type: Zip) {
     destinationDir = file("build/obb")
     entryCompression = ZipEntryCompression.STORED
@@ -111,6 +112,20 @@ task zipAssets(type: Zip) {
     baseName = "main.${verCode}.${appId}"
     extension = "obb"
 }
+
+task zipAssets(type:Exec) {
+  workingDir "build"
+  commandLine "jobb", "-d", "./assets", "-o", "main.${verCode}.${appId}.obb" -k 4chan -pn ${appId} -pv ${verCode}"
+}
+*/
+
+task zipAssets(type: Exec) {
+    workingDir "build"
+    def filename = "main.${verCode}.${appId}.obb"
+    commandLine "jobb", "-d", "./assets", "-o", "${filename}", "-pn", "${appId}", "-pv", "${verCode}"
+    standardOutput = new ByteArrayOutputStream()
+}
+
 
 def getADBPath() {
     def path = getSdkDir()
@@ -124,7 +139,7 @@ task createOBBDir(type: Exec) {
 }
 task uploadOBB(type: Exec) {
     def adb = getADBPath();
-    commandLine "$adb", 'push', "build/obb/main.${verCode}.${appId}.obb", "/mnt/sdcard/Android/obb/${appId}"
+    commandLine "$adb", 'push', "build/main.${verCode}.${appId}.obb", "/mnt/sdcard/Android/obb/${appId}"
 }
 
 unzipAssets.dependsOn clean

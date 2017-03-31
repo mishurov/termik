@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.co.mishurov.termik">
+    package="uk.co.mishurov.termik"
+    android:versionCode="1"
+    >
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Required to access Google Play Licensing -->  
