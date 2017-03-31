@@ -40,6 +40,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.File;
+import android.util.DisplayMetrics;
 
 public class MainActivity extends AppCompatActivity
                           implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -227,6 +228,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onCameraViewStarted(int width, int height) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenHeight = displayMetrics.heightPixels;
+        int screenWidth = displayMetrics.widthPixels;
+        float ratio = 0;
+        float heightRatio = 0;
+        float widthRatio = 0;
+        if (height < screenHeight)
+            heightRatio = (float) screenHeight / (float) height;
+        if (width < screenWidth)
+            widthRatio = (float) screenWidth / (float) width;
+        ratio = (heightRatio > widthRatio) ? heightRatio : widthRatio;
+        Log.d(TAG, "w: " + width + " h:" + height + " sw:" + screenWidth + " sh:" + screenHeight);
+        Log.d(TAG, "rw: " + widthRatio + " rh:" + heightRatio + " r:" + ratio);
+        _cameraBridgeViewBase.setScale(ratio);
     }
 
     public void onCameraViewStopped() {

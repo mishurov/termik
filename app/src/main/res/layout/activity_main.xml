@@ -17,14 +17,28 @@
                   android:layout_height="wrap_content"
                   android:layout_gravity="right|center"
                   android:id="@+id/linear"
+                  android:clipChildren="false"
+                  android:clipToPadding="false"
                   android:orientation="vertical" >
-        <TextView android:id="@+id/text"
+        <TextView android:id="@+id/heading"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:text="Hello, I am a TextView" />
-        <Button android:id="@+id/button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hello, I am a Button" />
+                  android:textColor="#fff"
+                  android:text="Analysis: Match:" />
+        <TextView android:id="@+id/guess_first"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#fff"
+                  android:text="99% Ololo" />
+        <TextView android:id="@+id/guess_second"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#fff"
+                  android:text="59% Trolololo" />
+        <TextView android:id="@+id/guess_third"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#fff"
+                  android:text="49% Olololo" />
     </LinearLayout>
 </FrameLayout>

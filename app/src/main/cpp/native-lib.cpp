@@ -125,6 +125,27 @@ void incept(Mat img) {
     }
 }
 
+int edgeThresh = 1;
+int lowThreshold = 65;
+int const max_lowThreshold = 100;
+int ratio = 3;
+int kernel_size = 3;
+
+void termik(Mat *real_img) {
+	Mat img = real_img->clone();
+	cv::cvtColor(img, img, cv::COLOR_RGBA2GRAY);
+	Mat edges;
+	cv::blur(img, edges, Size(3,3));
+	Canny(edges, edges, lowThreshold, lowThreshold*ratio, kernel_size );
+
+	cvtColor(img, img, CV_GRAY2RGBA);
+	cvtColor(edges, edges, CV_GRAY2RGBA);
+	cv::Scalar colorScalar = cv::Scalar(1, 0.2, 0.2, 1);
+	img = img.mul(colorScalar);
+	*real_img = img + edges;
+
+	//cvtColor(detected_edges, *real_img, CV_GRAY2RGBA);
+}
 
 
 extern "C"
@@ -133,7 +154,8 @@ void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
 	JNIEnv *env, jobject instance, jlong image) {
     Mat &img = *(Mat *) image;
 	if(obbMountPath[0] != '\0') {
-		incept(img.clone());
+		//incept(img.clone());
+		termik(&img);
 	}
 }
 
