@@ -29,16 +29,16 @@
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:textColor="#fff"
-                  android:text="99% Ololo" />
+                  android:text="Calculating..." />
         <TextView android:id="@+id/guess_second"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:textColor="#fff"
-                  android:text="59% Trolololo" />
+                  android:text="Calculating..." />
         <TextView android:id="@+id/guess_third"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:textColor="#fff"
-                  android:text="49% Olololo" />
+                  android:text="Calculating..." />
     </LinearLayout>
 </FrameLayout>

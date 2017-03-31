@@ -20,6 +20,7 @@ set_target_properties(lib_opencv PROPERTIES
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds it for you.
 # Gradle automatically packages shared libraries with your APK.
+Set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
 add_library( # Sets the name of the library.
              native-lib
@@ -57,6 +58,7 @@ target_link_libraries( # Specifies the target library.
                        # OpenCV lib
                        lib_opencv
                        android
+                       atomic
 
                        # Links the target library to the log library
                        # included in the NDK.

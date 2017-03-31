@@ -6,6 +6,8 @@
 #include <android/log.h>
 
 #include <fstream>
+#include <thread>
+#include <atomic>
 
 #define  LOG_TAG    "Termik"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -14,6 +16,9 @@ using namespace cv;
 using namespace cv::dnn;
 
 static char obbMountPath[256];
+static char guess_first[256];
+static std::atomic<int> is_inferring(0);
+static std::thread infer;
 
 /* Find best class for the blob (i. e. class with maximal probability) */
 void getMaxClass(dnn::Blob &probBlob, int *classId, double *classProb)
@@ -93,6 +98,7 @@ void incept(Mat img) {
     net.setBlob(inBlobName, inputBlob);        //set the network input
     //! [Set input blob]
 
+	LOGI("Starting computation");
     cv::TickMeter tm;
     tm.start();
 
@@ -122,7 +128,9 @@ void incept(Mat img) {
         std::cout << "Probability: " << classProb * 100 << "%" << std::endl;
 		LOGI("Best class: %s", classNames.at(classId).c_str());
 		LOGI("Probability: %f", classProb);
+		sprintf(guess_first, "%s %f", classNames.at(classId).c_str(), classProb);
     }
+	is_inferring = 0;
 }
 
 int edgeThresh = 1;
@@ -147,15 +155,27 @@ void termik(Mat *real_img) {
 	//cvtColor(detected_edges, *real_img, CV_GRAY2RGBA);
 }
 
-
 extern "C"
 {
 void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
 	JNIEnv *env, jobject instance, jlong image) {
     Mat &img = *(Mat *) image;
 	if(obbMountPath[0] != '\0') {
-		//incept(img.clone());
 		termik(&img);
+		if(is_inferring == 0) {
+			if(infer.joinable()) {
+				infer.join();
+				jstring s = env->NewStringUTF(guess_first);
+				jclass clazz = env->FindClass("uk/co/mishurov/termik/MainActivity");
+				jmethodID mid = env->GetMethodID(
+					clazz, "setInference", "(Ljava/lang/String;)V"
+				);
+				env->CallVoidMethod(instance, mid, s);
+				env->DeleteLocalRef(s);
+			}
+			is_inferring = 1;
+			infer = std::thread(incept, img.clone());
+		}
 	}
 }
 

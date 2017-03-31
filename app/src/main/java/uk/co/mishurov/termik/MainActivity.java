@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     OrientationEventListener mOrientationListener;
     int orientation;
     private LinearLayout mVisuals;
+    private TextView mGuess;
     /* obb */
     private static String mObbPath;
     private String mStatus;
@@ -178,6 +179,8 @@ public class MainActivity extends AppCompatActivity
         _cameraBridgeViewBase.setCvCameraViewListener(this);
 
         // Listen orientation
+
+        mGuess = (TextView) findViewById(R.id.guess_first);
         mVisuals = (LinearLayout) findViewById(R.id.linear);
         orientation = 0;
         mOrientationListener = new OrientationEventListener(this,
@@ -256,7 +259,18 @@ public class MainActivity extends AppCompatActivity
 
     public native void salt(long image);
     public native double setdir(String path);
-
+    
+    public void setInference(String letters) {
+        final String inference = letters;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mGuess.setText(inference);
+            }
+        });
+    }
+    
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();
