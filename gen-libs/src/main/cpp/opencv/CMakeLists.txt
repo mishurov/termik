@@ -35,6 +35,10 @@ else()
     set(CMAKE_ANDROID_ABI ${ANDROID_ABI})
 endif()
 
+set(OpenBLAS_HOME ${distribution_DIR}/openblas/${ANDROID_ABI})
+set(OpenBLAS_INCLUDE_DIR ${OpenBLAS_HOME}/include)
+set(OpenBLAS_LIB ${OpenBLAS_HOME}/lib/libopenblas.a)
+
 set(byproduct ${distribution_DIR}/opencv/sdk/native/libs/${ANDROID_ABI}/libopencv_highgui.a)
 include(ExternalProject)
 find_package(ZLIB REQUIRED)
@@ -64,6 +68,8 @@ ExternalProject_Add(OpenCV_external
         -DBUILD_PERF_TESTS=OFF
         -DBUILD_DOCS=OFF
         -DANDROID_STL=gnustl_static
+        -DOpenBLAS_INCLUDE_DIR=${OpenBLAS_INCLUDE_DIR}
+        -DOpenBLAS_LIB=${OpenBLAS_LIB}
         -DBUILD_LIBPROTOBUF_FROM_SOURCES=ON
         -Dopencv_dnn_BUILD_TORCH_IMPORTER=OFF
     BUILD_BYPRODUCTS ${byproduct}
