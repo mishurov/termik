@@ -28,6 +28,14 @@ void getMaxClass(dnn::Blob &probBlob, int *classId, double *classProb)
 
     minMaxLoc(probMat, NULL, classProb, NULL, &classNumber);
     *classId = classNumber.x;
+
+	LOGI("Best class id: %i", *classId);
+	LOGI("Probability: %f", *classProb);
+	cv::sort(probMat, probMat, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
+
+    *classProb = probMat.at<double>(1,1);
+	LOGI("Index probability: %f", *classProb);
+	//LOGI("Index Probability: %f", *classProb);
 }
 
 
@@ -112,7 +120,7 @@ void incept(Mat img) {
 	String outBlobName = "softmax2";
     dnn::Blob prob = net.getBlob(outBlobName);   //gather output of "prob" layer
 
-    Mat& result = prob.matRef();
+    //Mat& result = prob.matRef();
 
     BlobShape shape = prob.shape();
 
@@ -162,6 +170,7 @@ void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
     Mat &img = *(Mat *) image;
 	if(obbMountPath[0] != '\0') {
 		termik(&img);
+		/*
 		if(is_inferring == 0) {
 			if(infer.joinable()) {
 				infer.join();
@@ -176,6 +185,7 @@ void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
 			is_inferring = 1;
 			infer = std::thread(incept, img.clone());
 		}
+		*/
 	}
 }
 

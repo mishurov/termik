@@ -42,6 +42,9 @@ import android.widget.TextView;
 import java.io.File;
 import android.util.DisplayMetrics;
 
+import org.tensorflow.demo.Classifier;
+import org.tensorflow.demo.TensorFlowImageClassifier;
+
 public class MainActivity extends AppCompatActivity
                           implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -62,6 +65,14 @@ public class MainActivity extends AppCompatActivity
     private IDownloaderService mRemoteService;
     private ProgressDialog mProgressDialog;
     private final static String EXP_PATH = "/Android/obb/";
+    
+    /* classifier */
+    private Classifier classifier;
+    private static final int INPUT_SIZE = 224;
+    private static final int IMAGE_MEAN = 117;
+    private static final float IMAGE_STD = 1;
+    private static final String INPUT_NAME = "input";
+    private static final String OUTPUT_NAME = "output";
 
     private static class XAPKFile {
         public final boolean mIsMain;
@@ -177,7 +188,21 @@ public class MainActivity extends AppCompatActivity
         _cameraBridgeViewBase = (TermView) findViewById(R.id.main_surface);
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
+        
+        // classifier
 
+        /*
+        classifier =
+                TensorFlowImageClassifier.create(
+                    getAssets(),
+                    MODEL_FILE,
+                    LABEL_FILE,
+                    INPUT_SIZE,
+                    IMAGE_MEAN,
+                    IMAGE_STD,
+                    INPUT_NAME,
+                    OUTPUT_NAME);
+        */
         // Listen orientation
 
         mGuess = (TextView) findViewById(R.id.guess_first);

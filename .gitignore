@@ -22,4 +22,5 @@
 /opencv/build
 /downloader/build
 /licensing/build
+/tensorflow/build
 *.swp

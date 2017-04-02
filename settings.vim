@@ -2,9 +2,12 @@ let s:cache_dir = $HOME . '/.cache/java'
 let s:project_root = expand('<sfile>:p:h')
 let s:sdk_root = $HOME . '/Android/Sdk'
 
-let s:android_lib =
+let s:project_jars = [
     \ s:sdk_root .
-    \ "/platforms/android-25/android.jar"
+    \ "/platforms/android-25/android.jar",
+    \ s:project_root .
+    \ "/distribution/tensorflow/out/libandroid_tensorflow_inference_java.jar"
+    \ ]
 
 let s:ndk_includes = [
     \ s:sdk_root .
@@ -23,6 +26,7 @@ let s:project_includes = [
 " project java modules
 let s:project_modules = [
     \ s:project_root . '/app/src/main/java',
+    \ s:project_root . '/tensorflow/src/main/java',
     \ s:project_root . '/distribution/opencv/sdk/java/src',
     \ s:sdk_root . '/extras/google/market_licensing/library/src',
     \ s:sdk_root . 
@@ -31,7 +35,7 @@ let s:project_modules = [
 
 " module names for intermediates
 let s:modules_names = [
-    \ 'app', 'downloader', 'licensing', 'opencv'
+    \ 'app', 'downloader', 'licensing', 'opencv', 'tensorflow'
     \ ]
 
 " support libraries
@@ -64,7 +68,7 @@ function CollectSourceDirs(module_source_path)
 endfunction
 
 function SetupJava()
-  let l:project_sources = [ s:android_lib ]
+  let l:project_sources = s:project_jars
   for l:module in s:project_modules
     let l:project_module_sources = CollectSourceDirs(l:module)
     let l:project_sources =
@@ -98,9 +102,9 @@ function SetupJava()
       \ . interbuild_path . 'debug']
   endfor
 
-  let l:class_paths = s:android_lib .
-      \ ':' .join(l:intermediates, ':') .
-      \ ':' .join(l:support_classes, ':')
+  let l:class_paths = join(s:project_jars, ':') .
+      \ ':' . join(l:intermediates, ':') .
+      \ ':' . join(l:support_classes, ':')
 
   let g:ale_java_javac_classpath = l:class_paths
   let g:ale_java_javac_options 

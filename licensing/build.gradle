@@ -58,21 +58,12 @@ android {
             assets.srcDirs = [
                 "${libPath}/assets"
             ]
-            jniLibs.srcDirs = ['src']
-            resources.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
+            jniLibs.srcDirs = []
+            resources.srcDirs = []
+            renderscript.srcDirs = []
         }
     }
 }
-
-/*
-task copyAidl(type: Copy) {
-    from "${libPath}/aidl"
-    into "src/main"
-    include "*"
-}
-preBuild.dependsOn copyAidl
-*/
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])

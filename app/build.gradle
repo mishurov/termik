@@ -85,11 +85,13 @@ android {
             ]
             jniLibs.srcDirs = [
                 '../distribution/opencv/sdk/native/libs',
+                '../tensorflow/out/native/libtensorflow_demo.so',
+                '../tensorflow/out/native/libtensorflow_inference.so',
             ]
             assets.srcDirs = ['src/main/assets']
-            resources.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
+            resources.srcDirs = []
+            aidl.srcDirs = []
+            renderscript.srcDirs = []
         }
     }
 }
@@ -102,22 +104,6 @@ task unzipAssets(type: Copy) {
     }
     into 'build'
 }
-
-/*
-task zipAssets(type: Zip) {
-    destinationDir = file("build/obb")
-    entryCompression = ZipEntryCompression.STORED
-    from "build/assets"
-    Properties properties = new Properties()
-    baseName = "main.${verCode}.${appId}"
-    extension = "obb"
-}
-
-task zipAssets(type:Exec) {
-  workingDir "build"
-  commandLine "jobb", "-d", "./assets", "-o", "main.${verCode}.${appId}.obb" -k 4chan -pn ${appId} -pv ${verCode}"
-}
-*/
 
 task zipAssets(type: Exec) {
     workingDir "build"
@@ -156,5 +142,6 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile project(':downloader')
     compile project(':opencv')
+    compile project(':tensorflow')
     testCompile 'junit:junit:4.12'
 }
