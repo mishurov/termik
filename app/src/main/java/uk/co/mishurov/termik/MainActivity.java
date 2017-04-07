@@ -10,7 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
+//import android.widget.LinearLayout;
 
 import com.google.android.vending.expansion.downloader.Helpers;
 import com.google.android.vending.expansion.downloader.IDownloaderService;
@@ -44,6 +44,21 @@ import android.util.DisplayMetrics;
 
 import org.tensorflow.demo.Classifier;
 import org.tensorflow.demo.TensorFlowImageClassifier;
+import org.tensorflow.demo.ImageUtils;
+import android.view.Display;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Matrix;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.SystemClock;
+import java.util.List;
+
+import org.opencv.imgproc.Imgproc;
+import org.opencv.core.Size;
+import org.opencv.android.Utils;
+import org.opencv.core.Rect;
+
 
 public class MainActivity extends AppCompatActivity
                           implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -53,7 +68,7 @@ public class MainActivity extends AppCompatActivity
 
     OrientationEventListener mOrientationListener;
     int orientation;
-    private LinearLayout mVisuals;
+    private ResultsView mVisuals;
     private TextView mGuess;
     /* obb */
     private static String mObbPath;
@@ -67,12 +82,26 @@ public class MainActivity extends AppCompatActivity
     private final static String EXP_PATH = "/Android/obb/";
     
     /* classifier */
-    private Classifier classifier;
+    private Classifier classifier = null;
+    private static final String MODEL_FILENAME = "/tensorflow_inception_graph.pb";
+    private static final String LABEL_FILENAME = "/imagenet_comp_graph_label_strings.txt";
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final float IMAGE_STD = 1;
     private static final String INPUT_NAME = "input";
     private static final String OUTPUT_NAME = "output";
+    private Bitmap rgbFrameBitmap = null;
+    private Bitmap croppedBitmap = null;
+    private Matrix frameToCropTransform;
+    private Matrix cropToFrameTransform;
+    private static final boolean MAINTAIN_ASPECT = true;
+    private Handler handler;
+    private HandlerThread handlerThread;
+    private long lastProcessingTimeMs;
+    private int previewWidth = 0;
+    private int previewHeight = 0;
+    private Mat mRecentFrame;
+    private boolean computing = false;
 
     private static class XAPKFile {
         public final boolean mIsMain;
@@ -130,6 +159,22 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    void setUpClassifier() {
+        String modelFile = mPath + MODEL_FILENAME;
+        String labelFile = mPath + LABEL_FILENAME;
+        classifier = TensorFlowImageClassifier.create(
+            getAssets(),
+            modelFile,
+            labelFile,
+            INPUT_SIZE,
+            IMAGE_MEAN,
+            IMAGE_STD,
+            INPUT_NAME,
+            OUTPUT_NAME
+        );
+    
+    }
+
     OnObbStateChangeListener mEventListener = new OnObbStateChangeListener() {
         @Override
         public void onObbStateChange(String path, int state) {
@@ -139,6 +184,7 @@ public class MainActivity extends AppCompatActivity
                 mPath = mSM.getMountedObbPath(mObbPath);
                 Log.d(TAG, "MAUNTED =" + mPath);
                 setdir(mPath);
+                setUpClassifier();
             } else {
                 mPath = "";
                 Log.d(TAG, "NE MAUNTED =" + mPath + "state: " + state);
@@ -189,31 +235,17 @@ public class MainActivity extends AppCompatActivity
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
         
-        // classifier
-
-        /*
-        classifier =
-                TensorFlowImageClassifier.create(
-                    getAssets(),
-                    MODEL_FILE,
-                    LABEL_FILE,
-                    INPUT_SIZE,
-                    IMAGE_MEAN,
-                    IMAGE_STD,
-                    INPUT_NAME,
-                    OUTPUT_NAME);
-        */
         // Listen orientation
 
-        mGuess = (TextView) findViewById(R.id.guess_first);
-        mVisuals = (LinearLayout) findViewById(R.id.linear);
+        //mGuess = (TextView) findViewById(R.id.guess_first);
+        mVisuals = (ResultsView) findViewById(R.id.linear);
         orientation = 0;
         mOrientationListener = new OrientationEventListener(this,
             SensorManager.SENSOR_DELAY_NORMAL) {
                 @Override
                 public void onOrientationChanged(int orientation) {
                     MainActivity.this.orientation = orientation;
-                    MainActivity.this.mVisuals.setRotation(-orientation-90);
+                    MainActivity.this.mVisuals.adjust(orientation);
                 }
             };
 
@@ -228,13 +260,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onPause() {
+    public synchronized void onPause() {
+        handlerThread.quitSafely();
+        try {
+            handlerThread.join();
+            handlerThread = null;
+            handler = null;
+        } catch (final InterruptedException e) {
+            Log.e(TAG, "Exception!" + e.toString());
+        }
+
         super.onPause();
         disableCamera();
     }
 
     @Override
-    public void onResume() {
+    public synchronized void onResume() {
         super.onResume();
         if (!OpenCVLoader.initDebug()) {
             Log.d(
@@ -248,11 +289,62 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             _baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+        
+        handlerThread = new HandlerThread("inference");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper());
     }
 
     public void disableCamera() {
         if (_cameraBridgeViewBase != null)
             _cameraBridgeViewBase.disableView();
+    }
+
+    void setUpTransformMatrices() {
+        Display display = getWindowManager().getDefaultDisplay();
+        int screenOrientation = display.getRotation();
+        int cameraOrientation = 0;//_cameraBridgeViewBase.getCameraOrientation();
+        int sensorOrientation = screenOrientation + cameraOrientation;
+        rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
+        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+
+        frameToCropTransform =
+            ImageUtils.getTransformationMatrix(
+                previewWidth, previewHeight,
+                INPUT_SIZE, INPUT_SIZE,
+                sensorOrientation, MAINTAIN_ASPECT);
+
+        cropToFrameTransform = new Matrix();
+        frameToCropTransform.invert(cropToFrameTransform);
+
+        startInference();
+    }
+
+    void startInference() {
+        runInBackground(
+            new Runnable() {
+                @Override
+                public void run() {
+                Log.i(TAG, "Starting inference");
+                computing = true;
+                Size sz = new Size(INPUT_SIZE, INPUT_SIZE);
+                int x = 0;
+                int y = 0;
+                Rect roi = new Rect(x, y, previewHeight, previewHeight);
+                Mat procImage = new Mat(mRecentFrame, roi);
+                Imgproc.resize(procImage, procImage, sz);
+                Utils.matToBitmap(procImage, croppedBitmap);
+                final long startTime = SystemClock.uptimeMillis();
+                computing = false;
+                final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
+                lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+                Log.i(TAG, "Calculated");
+                for (Classifier.Recognition res : results) {
+                    Log.i(TAG, "" + res.getTitle() + " " + res.getConfidence());
+                }
+                startInference();
+            }
+        });
     }
 
     public void onCameraViewStarted(int width, int height) {
@@ -271,6 +363,11 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "w: " + width + " h:" + height + " sw:" + screenWidth + " sh:" + screenHeight);
         Log.d(TAG, "rw: " + widthRatio + " rh:" + heightRatio + " r:" + ratio);
         _cameraBridgeViewBase.setScale(ratio);
+
+        previewWidth = width;
+        previewHeight = height;
+
+        setUpTransformMatrices();
     }
 
     public void onCameraViewStopped() {
@@ -278,7 +375,9 @@ public class MainActivity extends AppCompatActivity
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat image = inputFrame.rgba();
-        salt(image.getNativeObjAddr());
+        if (!computing)
+            mRecentFrame = image.clone();
+        //salt(image.getNativeObjAddr());
         return image;
     }
 
@@ -290,14 +389,19 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mGuess.setText(inference);
+                //mGuess.setText(inference);
             }
         });
     }
-    
+
+    protected synchronized void runInBackground(final Runnable r) {
+        if (handler != null) {
+            handler.post(r);
+        }
+    }
     
     @Override
-    protected void onDestroy() {
+    protected synchronized void onDestroy() {
         super.onDestroy();
         disableCamera();
     }

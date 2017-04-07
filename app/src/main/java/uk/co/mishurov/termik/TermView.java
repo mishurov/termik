@@ -17,7 +17,7 @@ import android.util.Log;
 
 public class TermView extends JavaCameraView implements PictureCallback {
 
-    private static final String TAG = "Sample::Tutorial3View";
+    private static final String TAG = "Termik";
     private String mPictureFileName;
 
     private Mat mRgba;
@@ -59,8 +59,15 @@ public class TermView extends JavaCameraView implements PictureCallback {
     public Size getResolution() {
         return mCamera.getParameters().getPreviewSize();
     }
+
     public void setScale(float scale) {
         mScale = scale;
+    }
+
+    public int getCameraOrientation() {
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        Camera.getCameraInfo(mCameraIndex, cameraInfo);
+        return cameraInfo.orientation;
     }
 
     public void takePicture(final String fileName) {
@@ -93,13 +100,4 @@ public class TermView extends JavaCameraView implements PictureCallback {
         }
 
     }
-    /*
-    public Mat onCameraFrame(CvCameraViewFrame inputFrame) { 
-        mRgba = inputFrame.rgba();
-        Mat mRgbaT = mRgba.t();
-        Core.flip(mRgba.t(), mRgbaT, 1);
-        Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
-        return mRgbaT;
-    }
-    */
 }

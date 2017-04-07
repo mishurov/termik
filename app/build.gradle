@@ -85,8 +85,8 @@ android {
             ]
             jniLibs.srcDirs = [
                 '../distribution/opencv/sdk/native/libs',
-                '../tensorflow/out/native/libtensorflow_demo.so',
-                '../tensorflow/out/native/libtensorflow_inference.so',
+                '../distribution/tensorflow/out/native/libtensorflow_demo.so',
+                '../distribution/tensorflow/out/native/libtensorflow_inference.so',
             ]
             assets.srcDirs = ['src/main/assets']
             resources.srcDirs = []
