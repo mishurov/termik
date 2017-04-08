@@ -10,13 +10,18 @@ import android.view.Gravity;
 import android.util.Log;
 import android.graphics.Canvas;
 import android.view.View;
+import android.widget.RelativeLayout;
 
-public class ResultsView extends LinearLayout {
+public class ResultsView extends FrameLayout {
     private static final String TAG = "Termik";
+    private static final int MARGIN = 5;
 
-    ClippingTextView nView;
-    int textWidth = 0;
-    int textHeight = 0;
+    private TextView textView;
+    private int textWidth = 0;
+    private int textHeight = 0;
+    private int diag = 0;
+    private int orientation = 0;
+    private boolean refreshing = false;
 
     public ResultsView(Context context) {
         this(context, null, 0, 0);
@@ -36,86 +41,64 @@ public class ResultsView extends LinearLayout {
     }
 
     private void init(Context context) {
-        nView = new ClippingTextView(context);
-        nView.setText("TROLOLOHA");
-        nView.setTextAppearance(context, R.style.TermFont);
-        nView.setBackgroundColor(0xFF00FF00);
-        /*
-        int WRAP = LinearLayout.LayoutParams.WRAP_CONTENT;
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            WRAP, WRAP, Gravity.CENTER|Gravity.CENTER
-        );
-        nView.setLayoutParams(params);
-        */
+        textView = new ClippingTextView(context);
+        textView.setTextAppearance(context, R.style.TermFont);
+        // set background to fill the container for w/h calculations
+        setBackgroundColor(0x88FF0000);
         int index = 0;
-        this.addView(nView, index);
-        textWidth = 130; //nView.getWidth();
-        textHeight = 30; //nView.getHeight();
-
-        Log.i(TAG, "VIEW HEIGHT: " + getWidth());
-
-        double w = textWidth;
-        double h = textHeight;
-        double d = Math.sqrt(w * w + h * h);
-        int diag = (int) Math.round(d);
-        nView.setWidth(diag);
-        nView.setHeight(diag);
-        nView.setPivotX(diag/2);
-        nView.setPivotY(diag/2);
+        this.addView(textView, index);
     }
 
     public void adjust(int rotation) {
-        /*
-        int WRAP = FrameLayout.LayoutParams.WRAP_CONTENT;
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-            WRAP, WRAP, Gravity.CENTER|Gravity.CENTER
-        );
-        params.setMargins(20, 20, 20, 20);
-        setLayoutParams(params);
-        */
-        rotation -= 90;
-        /*
-        int w = 130;
-        nView.setWidth(w);
-        nView.setHeight(w);
-        nView.setPivotX(w/2);
-        nView.setPivotY(w/2);
-        */
-        nView.setRotation(rotation);
-        //nView.offsetTopAndBottom(rotation);
-        //Log.i(TAG, "Width:" + w);
-        //Log.i(TAG, "Rotation:" + getRotation());
-    }
-
-    public void setResults() {
-     
-    }
-
-    /*
-    @Override
-    protected boolean drawChild(Canvas canvas, View child, long time) {
-        //TextBaloon - is view that I'm trying to rotate
-        if(!(child instanceof ClippingTextView)) {
-            return super.drawChild(canvas, child, time);
+        orientation = rotation - 90;
+        if (!refreshing) {
+            setRotation(orientation);
         }
-        final int width = child.getWidth();
-        final int height = child.getHeight();
+        /*
 
-        final int left = child.getLeft();
-        final int top = child.getTop();
-        final int right = left + width;
-        final int bottom = top + height;
+        // Bounding Box dimensions
 
-        int restoreTo = canvas.save();
+        double theta = Math.toRadians(-rotation);
+        double cs = Math.cos(theta);
+        double sn = Math.sin(theta);
+        double w = textWidth;
+        double h = textHeight;
 
-        canvas.translate(left, top);
+        double bbw = Math.abs(w * cs + h * sn);
+        double bbh = Math.abs(h * cs + w * sn);
 
-        invalidate(left - width, top - height, right + width, bottom + height);
-        child.draw(canvas);
-
-        canvas.restoreToCount(restoreTo);
-
-        return true;
+        */
     }
-    */
+
+    public void setResults(String text) {
+        refreshing = true;
+        textView.setText(text);
+        // calculate text dimensions
+        textView.measure(0, 0);
+        textWidth = textView.getMeasuredWidth();
+        textHeight = textView.getMeasuredHeight();
+        // prevent gravity propagation
+        textView.setGravity(Gravity.CENTER | Gravity.CENTER);
+
+        // center text inside container
+        //setGravity(Gravity.CENTER | Gravity.CENTER);
+        // calculate diagonal length as max bounds for container
+        double w = textWidth;
+        double h = textHeight;
+        double d = Math.sqrt(w * w + h * h);
+        diag = (int) Math.round(d);
+        diag += MARGIN;
+
+        // setup container
+        setMeasuredDimension(diag, diag);
+        setPivotX(diag/2);
+        setPivotY(diag/2);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            diag, diag, Gravity.RIGHT|Gravity.CENTER
+        );
+        setLayoutParams(params);
+        //setVisibility(View.VISIBLE);
+        refreshing = false;
+    }
 }

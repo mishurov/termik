@@ -13,6 +13,7 @@ public class ClippingTextView extends TextView {
 
     public int origWidth = 0;
     public int origHeight = 0;
+    public int diag = 0;
 
     public ClippingTextView(Context context) {
       super(context);
@@ -24,6 +25,12 @@ public class ClippingTextView extends TextView {
 
     public ClippingTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+    
+    public void setClippingDims() {
+        measure(0, 0);
+        origWidth = getMeasuredWidth();
+        origHeight = getMeasuredHeight();
     }
     
     /*

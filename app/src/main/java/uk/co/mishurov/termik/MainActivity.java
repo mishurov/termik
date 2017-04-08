@@ -236,9 +236,8 @@ public class MainActivity extends AppCompatActivity
         _cameraBridgeViewBase.setCvCameraViewListener(this);
         
         // Listen orientation
-
-        //mGuess = (TextView) findViewById(R.id.guess_first);
         mVisuals = (ResultsView) findViewById(R.id.linear);
+        mVisuals.setResults("Calculating...");
         orientation = 0;
         mOrientationListener = new OrientationEventListener(this,
             SensorManager.SENSOR_DELAY_NORMAL) {
@@ -339,9 +338,18 @@ public class MainActivity extends AppCompatActivity
                 final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
                 lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
                 Log.i(TAG, "Calculated");
+                String output = "";
                 for (Classifier.Recognition res : results) {
-                    Log.i(TAG, "" + res.getTitle() + " " + res.getConfidence());
+                    Log.i(TAG, "res " + res.getTitle());
+
+                    output += String.format(
+                        java.util.Locale.US,
+                        "%s %.2f\n",
+                        res.getTitle(),
+                        res.getConfidence()
+                    );
                 }
+                setInference(output);
                 startInference();
             }
         });
@@ -383,13 +391,13 @@ public class MainActivity extends AppCompatActivity
 
     public native void salt(long image);
     public native double setdir(String path);
-    
+
     public void setInference(String letters) {
         final String inference = letters;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //mGuess.setText(inference);
+                mVisuals.setResults(inference);
             }
         });
     }
