@@ -11,6 +11,8 @@ import android.util.Log;
 import android.graphics.Canvas;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.graphics.Matrix;
+import android.graphics.Rect;
 
 public class ResultsView extends FrameLayout {
     private static final String TAG = "Termik";
@@ -20,8 +22,9 @@ public class ResultsView extends FrameLayout {
     private int textWidth = 0;
     private int textHeight = 0;
     private int diag = 0;
-    private int orientation = 0;
     private boolean refreshing = false;
+    private int angle = 0;
+
 
     public ResultsView(Context context) {
         this(context, null, 0, 0);
@@ -41,7 +44,7 @@ public class ResultsView extends FrameLayout {
     }
 
     private void init(Context context) {
-        textView = new ClippingTextView(context);
+        textView = new TextView(context);
         textView.setTextAppearance(context, R.style.TermFont);
         // set background to fill the container for w/h calculations
         setBackgroundColor(0x88FF0000);
@@ -50,10 +53,8 @@ public class ResultsView extends FrameLayout {
     }
 
     public void adjust(int rotation) {
-        orientation = rotation - 90;
-        if (!refreshing) {
-            setRotation(orientation);
-        }
+        rotation += 90;
+        setAngle(rotation);
         /*
 
         // Bounding Box dimensions
@@ -71,7 +72,6 @@ public class ResultsView extends FrameLayout {
     }
 
     public void setResults(String text) {
-        refreshing = true;
         textView.setText(text);
         // calculate text dimensions
         textView.measure(0, 0);
@@ -80,8 +80,6 @@ public class ResultsView extends FrameLayout {
         // prevent gravity propagation
         textView.setGravity(Gravity.CENTER | Gravity.CENTER);
 
-        // center text inside container
-        //setGravity(Gravity.CENTER | Gravity.CENTER);
         // calculate diagonal length as max bounds for container
         double w = textWidth;
         double h = textHeight;
@@ -98,7 +96,25 @@ public class ResultsView extends FrameLayout {
             diag, diag, Gravity.RIGHT|Gravity.CENTER
         );
         setLayoutParams(params);
-        //setVisibility(View.VISIBLE);
-        refreshing = false;
+    }
+
+    public int getAngle() {
+        return angle;
+    }
+
+    public void setAngle(int angle) {
+        if (this.angle != angle) {
+            this.angle = angle;
+            requestLayout();
+            invalidate();
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        canvas.save();
+        canvas.rotate(-angle, getWidth() / 2f, getHeight() / 2f);
+        super.dispatchDraw(canvas);
+        canvas.restore();
     }
 }

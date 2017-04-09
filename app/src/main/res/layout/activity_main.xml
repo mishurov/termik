@@ -9,7 +9,7 @@
     android:clipToPadding="false"
     tools:context="uk.co.mishurov.termik.MainActivity">
 
-    <uk.co.mishurov.termik.TermView
+    <uk.co.mishurov.termik.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/main_surface" />

@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
-//import android.widget.LinearLayout;
 
 import com.google.android.vending.expansion.downloader.Helpers;
 import com.google.android.vending.expansion.downloader.IDownloaderService;
@@ -58,16 +57,17 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Size;
 import org.opencv.android.Utils;
 import org.opencv.core.Rect;
+import org.opencv.core.Core;
 
 
 public class MainActivity extends AppCompatActivity
                           implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private static final String TAG = "Termik";
-    private TermView _cameraBridgeViewBase;
+    private JavaCameraView _cameraBridgeViewBase;
 
     OrientationEventListener mOrientationListener;
-    int orientation;
+    private int orientation = 0;
     private ResultsView mVisuals;
     private TextView mGuess;
     /* obb */
@@ -231,14 +231,14 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "NE MAUNT");
         }
 
-        _cameraBridgeViewBase = (TermView) findViewById(R.id.main_surface);
+        _cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.main_surface);
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
-        
+
+        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
         // Listen orientation
         mVisuals = (ResultsView) findViewById(R.id.linear);
         mVisuals.setResults("Calculating...");
-        orientation = 0;
         mOrientationListener = new OrientationEventListener(this,
             SensorManager.SENSOR_DELAY_NORMAL) {
                 @Override
@@ -288,7 +288,6 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             _baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
-        
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
@@ -299,26 +298,6 @@ public class MainActivity extends AppCompatActivity
             _cameraBridgeViewBase.disableView();
     }
 
-    void setUpTransformMatrices() {
-        Display display = getWindowManager().getDefaultDisplay();
-        int screenOrientation = display.getRotation();
-        int cameraOrientation = 0;//_cameraBridgeViewBase.getCameraOrientation();
-        int sensorOrientation = screenOrientation + cameraOrientation;
-        rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
-
-        frameToCropTransform =
-            ImageUtils.getTransformationMatrix(
-                previewWidth, previewHeight,
-                INPUT_SIZE, INPUT_SIZE,
-                sensorOrientation, MAINTAIN_ASPECT);
-
-        cropToFrameTransform = new Matrix();
-        frameToCropTransform.invert(cropToFrameTransform);
-
-        startInference();
-    }
-
     void startInference() {
         runInBackground(
             new Runnable() {
@@ -326,15 +305,47 @@ public class MainActivity extends AppCompatActivity
                 public void run() {
                 Log.i(TAG, "Starting inference");
                 computing = true;
-                Size sz = new Size(INPUT_SIZE, INPUT_SIZE);
+
+                // crop
+                int side = 0;
                 int x = 0;
                 int y = 0;
-                Rect roi = new Rect(x, y, previewHeight, previewHeight);
+                if (previewHeight < previewWidth) {
+                    side = previewHeight;
+                    x = (previewWidth - side) / 2;
+                    y = 0;
+                } else {
+                    side = previewWidth;
+                    y = (previewHeight - side) / 2;
+                    x = 0;
+                }
+                Rect roi = new Rect(x, y, side, side);
                 Mat procImage = new Mat(mRecentFrame, roi);
+
+                // resize
+                Size sz = new Size(INPUT_SIZE, INPUT_SIZE);
                 Imgproc.resize(procImage, procImage, sz);
+
+                // rotate
+                int angle = orientation;
+                Log.i(TAG, "Rotation: " + orientation);
+                if (angle >= 45 && angle < 135) {
+                    // 90 cw
+                    Core.flip(procImage.t(), procImage, 1);
+                } else if (angle >= 135 && angle < 225) {
+                    // 180
+                    Core.flip(procImage, procImage, -1); 
+                } else if (angle >= 225 && angle < 315) {
+                    // 90 ccw
+                    Core.flip(procImage.t(), procImage, 0);
+                }
+
+                // convert
                 Utils.matToBitmap(procImage, croppedBitmap);
+
                 final long startTime = SystemClock.uptimeMillis();
                 computing = false;
+
                 final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
                 lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
                 Log.i(TAG, "Calculated");
@@ -349,6 +360,8 @@ public class MainActivity extends AppCompatActivity
                         res.getConfidence()
                     );
                 }
+                output += "Processing time: " + lastProcessingTimeMs;
+
                 setInference(output);
                 startInference();
             }
@@ -368,14 +381,12 @@ public class MainActivity extends AppCompatActivity
         if (width < screenWidth)
             widthRatio = (float) screenWidth / (float) width;
         ratio = (heightRatio > widthRatio) ? heightRatio : widthRatio;
-        Log.d(TAG, "w: " + width + " h:" + height + " sw:" + screenWidth + " sh:" + screenHeight);
-        Log.d(TAG, "rw: " + widthRatio + " rh:" + heightRatio + " r:" + ratio);
         _cameraBridgeViewBase.setScale(ratio);
 
         previewWidth = width;
         previewHeight = height;
 
-        setUpTransformMatrices();
+        startInference();
     }
 
     public void onCameraViewStopped() {

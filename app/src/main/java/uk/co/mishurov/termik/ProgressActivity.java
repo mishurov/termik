@@ -32,20 +32,28 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
+import uk.co.mishurov.termik.R;
+
 import java.util.List;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 public class ProgressActivity extends AppCompatActivity
                               implements IDownloaderClient{
 
     private IStub mDownloaderClientStub;
     private IDownloaderService mRemoteService;
-    private ProgressDialog mProgressDialog;
+    private ProgressBar mProgressDialog;
+    private TextView mProgressText;
     private static final String LOG_TAG = "Sample";
     private final static String EXP_PATH = "/Android/obb/";
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_progress);
+        mProgressDialog = (ProgressBar) findViewById(R.id.progress_bar);
+        mProgressText = (TextView) findViewById(R.id.progress_text);
         try {
             Intent launchIntent = this.getIntent();
             // Build an Intent to start this activity from the Notification
@@ -81,11 +89,7 @@ public class ProgressActivity extends AppCompatActivity
                     this, AssetDownloaderService.class
                 );
                 // Shows download progress
-                mProgressDialog = new ProgressDialog(ProgressActivity.this);
-                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                mProgressDialog.setMessage(getResources().getString(R.string.downloading_assets));
-                mProgressDialog.setCancelable(false);
-                mProgressDialog.show();
+                mProgressText.setText(getResources().getString(R.string.downloading_assets));
                 return;
             }
             // If the download wasn't necessary, fall through to start the app
@@ -166,7 +170,7 @@ public class ProgressActivity extends AppCompatActivity
     public void onDownloadProgress(DownloadProgressInfo progress) {
         long percents = progress.mOverallProgress * 100 / progress.mOverallTotal;
         Log.v(LOG_TAG, "DownloadProgress:"+Long.toString(percents) + "%");
-        mProgressDialog.setProgress((int) percents);
+        //mProgressDialog.setProgress((int) percents);
     }
 
     @Override
@@ -184,11 +188,11 @@ public class ProgressActivity extends AppCompatActivity
                 break;
             case STATE_COMPLETED: // The download was finished
                 // validateXAPKZipFiles();
-                mProgressDialog.setMessage(getResources().getString(
+                mProgressText.setText(getResources().getString(
                     R.string.preparing_assets)
                 );
                 // dismiss progress dialog
-                mProgressDialog.dismiss();
+                //mProgressDialog.dismiss();
                 // Load url
                 //super.loadUrl(Config.getStartUrl());
                 break;
