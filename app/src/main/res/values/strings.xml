@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Termik</string>
-    <string name="downloading_assets">Downloading assets</string>
-    <string name="preparing_assets">Preparing assets</string>
     <string name="error">Error</string>
     <string name="download_failed">Download failed</string>
     <string name="close">Close</string>

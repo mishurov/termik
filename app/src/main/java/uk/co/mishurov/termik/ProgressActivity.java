@@ -77,6 +77,7 @@ public class ProgressActivity extends AppCompatActivity
 
             // Start the download service (if required)
             Log.v(LOG_TAG, "Start the download service");
+            mProgressText.setText("Starting the download service");
             int startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(
                 this, pendingIntent, AssetDownloaderService.class
             );
@@ -89,7 +90,7 @@ public class ProgressActivity extends AppCompatActivity
                     this, AssetDownloaderService.class
                 );
                 // Shows download progress
-                mProgressText.setText(getResources().getString(R.string.downloading_assets));
+                mProgressText.setText("Downloading assets...");
                 return;
             }
             // If the download wasn't necessary, fall through to start the app
@@ -170,7 +171,7 @@ public class ProgressActivity extends AppCompatActivity
     public void onDownloadProgress(DownloadProgressInfo progress) {
         long percents = progress.mOverallProgress * 100 / progress.mOverallTotal;
         Log.v(LOG_TAG, "DownloadProgress:"+Long.toString(percents) + "%");
-        //mProgressDialog.setProgress((int) percents);
+        mProgressDialog.setProgress((int) percents);
     }
 
     @Override
@@ -185,21 +186,28 @@ public class ProgressActivity extends AppCompatActivity
         switch (newState) {
             case STATE_DOWNLOADING:
                 Log.v(LOG_TAG, "Downloading...");
+                mProgressText.setText("Downloading assets...");
                 break;
             case STATE_COMPLETED: // The download was finished
                 // validateXAPKZipFiles();
-                mProgressText.setText(getResources().getString(
-                    R.string.preparing_assets)
-                );
+                mProgressText.setText("Preparing assets...");
                 // dismiss progress dialog
                 //mProgressDialog.dismiss();
                 // Load url
                 //super.loadUrl(Config.getStartUrl());
                 break;
             case STATE_FAILED_UNLICENSED:
+                mProgressText.setText("Failed: Unlicensed");
+                break;
             case STATE_FAILED_FETCHING_URL:
+                mProgressText.setText("Failed: Fetching URL");
+                break;
             case STATE_FAILED_SDCARD_FULL:
+                mProgressText.setText("Failed: SD Card is full");
+                break;
             case STATE_FAILED_CANCELED:
+                mProgressText.setText("Failed: Cancelled");
+                break;
             case STATE_FAILED: 
                 Builder alert = new AlertDialog.Builder(this);
                 alert.setTitle(getResources().getString(R.string.error));
