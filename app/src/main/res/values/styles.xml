@@ -9,6 +9,7 @@
         <item name="windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="colorAccent">#ff0000</item>
     </style>
     <style name="TermFont">
         <item name="android:textColor">#ffffff</item>

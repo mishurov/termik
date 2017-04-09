@@ -172,7 +172,6 @@ public class MainActivity extends AppCompatActivity
             INPUT_NAME,
             OUTPUT_NAME
         );
-    
     }
 
     OnObbStateChangeListener mEventListener = new OnObbStateChangeListener() {
@@ -238,7 +237,7 @@ public class MainActivity extends AppCompatActivity
         croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
         // Listen orientation
         mVisuals = (ResultsView) findViewById(R.id.linear);
-        mVisuals.setResults("Calculating...");
+        mVisuals.setResults("Visual:\nCalculating...");
         mOrientationListener = new OrientationEventListener(this,
             SensorManager.SENSOR_DELAY_NORMAL) {
                 @Override
@@ -327,7 +326,7 @@ public class MainActivity extends AppCompatActivity
                 Imgproc.resize(procImage, procImage, sz);
 
                 // rotate
-                int angle = orientation;
+                int angle = orientation + 90;
                 Log.i(TAG, "Rotation: " + orientation);
                 if (angle >= 45 && angle < 135) {
                     // 90 cw
@@ -349,18 +348,14 @@ public class MainActivity extends AppCompatActivity
                 final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
                 lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
                 Log.i(TAG, "Calculated");
-                String output = "";
+                String output = "Visual:\n";
                 for (Classifier.Recognition res : results) {
-                    Log.i(TAG, "res " + res.getTitle());
-
-                    output += String.format(
-                        java.util.Locale.US,
-                        "%s %.2f\n",
-                        res.getTitle(),
-                        res.getConfidence()
-                    );
+                    //Log.i(TAG, "res " + res.getTitle());
+                    //int percent = (int) (res.getConfidence() * 100);
+                    //output += percent + "% " + res.getTitle() + "\n";
+                    output += res.toString() + "\n";
                 }
-                output += "Processing time: " + lastProcessingTimeMs;
+                output += lastProcessingTimeMs + " ms";
 
                 setInference(output);
                 startInference();
@@ -376,10 +371,10 @@ public class MainActivity extends AppCompatActivity
         float ratio = 0;
         float heightRatio = 0;
         float widthRatio = 0;
-        if (height < screenHeight)
-            heightRatio = (float) screenHeight / (float) height;
         if (width < screenWidth)
             widthRatio = (float) screenWidth / (float) width;
+        if (height < screenHeight)
+            heightRatio = (float) screenHeight / (float) height;
         ratio = (heightRatio > widthRatio) ? heightRatio : widthRatio;
         _cameraBridgeViewBase.setScale(ratio);
 
@@ -396,7 +391,7 @@ public class MainActivity extends AppCompatActivity
         Mat image = inputFrame.rgba();
         if (!computing)
             mRecentFrame = image.clone();
-        //salt(image.getNativeObjAddr());
+        salt(image.getNativeObjAddr());
         return image;
     }
 

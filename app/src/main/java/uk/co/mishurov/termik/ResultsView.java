@@ -47,7 +47,8 @@ public class ResultsView extends FrameLayout {
         textView = new TextView(context);
         textView.setTextAppearance(context, R.style.TermFont);
         // set background to fill the container for w/h calculations
-        setBackgroundColor(0x88FF0000);
+        // first 2 digits is alpha
+        setBackgroundColor(0x01FF0000);
         int index = 0;
         this.addView(textView, index);
     }
