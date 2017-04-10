@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.animation.ObjectAnimator;
 
 public class ResultsView extends FrameLayout {
     private static final String TAG = "Termik";
@@ -54,8 +55,8 @@ public class ResultsView extends FrameLayout {
     }
 
     public void adjust(int rotation) {
-        rotation += 90;
         setAngle(rotation);
+
         /*
 
         // Bounding Box dimensions

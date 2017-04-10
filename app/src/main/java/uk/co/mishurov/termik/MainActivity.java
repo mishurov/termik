@@ -58,6 +58,8 @@ import org.opencv.core.Size;
 import org.opencv.android.Utils;
 import org.opencv.core.Rect;
 import org.opencv.core.Core;
+import android.view.Surface;
+import org.opencv.core.CvType;
 
 
 public class MainActivity extends AppCompatActivity
@@ -100,8 +102,9 @@ public class MainActivity extends AppCompatActivity
     private long lastProcessingTimeMs;
     private int previewWidth = 0;
     private int previewHeight = 0;
-    private Mat mRecentFrame;
+    private Mat mRecentFrame = null;
     private boolean computing = false;
+    private int screenRotation = 0;
 
     private static class XAPKFile {
         public final boolean mIsMain;
@@ -234,7 +237,23 @@ public class MainActivity extends AppCompatActivity
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
 
-        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+        Display display = getWindowManager().getDefaultDisplay();
+        int rotation = display.getRotation();
+        switch (rotation) {
+            case Surface.ROTATION_90:
+                screenRotation = 90;
+                break;
+            case Surface.ROTATION_180:
+                screenRotation = 180;
+                break;
+            case Surface.ROTATION_270:
+                screenRotation = -90;
+                break;
+            default:
+                screenRotation = 0;
+                break;
+        }
+
         // Listen orientation
         mVisuals = (ResultsView) findViewById(R.id.linear);
         mVisuals.setResults("Visual:\nCalculating...");
@@ -242,6 +261,7 @@ public class MainActivity extends AppCompatActivity
             SensorManager.SENSOR_DELAY_NORMAL) {
                 @Override
                 public void onOrientationChanged(int orientation) {
+                    orientation += screenRotation;
                     MainActivity.this.orientation = orientation;
                     MainActivity.this.mVisuals.adjust(orientation);
                 }
@@ -302,9 +322,9 @@ public class MainActivity extends AppCompatActivity
             new Runnable() {
                 @Override
                 public void run() {
+                // wait for frame
                 Log.i(TAG, "Starting inference");
                 computing = true;
-
                 // crop
                 int side = 0;
                 int x = 0;
@@ -326,7 +346,7 @@ public class MainActivity extends AppCompatActivity
                 Imgproc.resize(procImage, procImage, sz);
 
                 // rotate
-                int angle = orientation + 90;
+                int angle = orientation;
                 Log.i(TAG, "Rotation: " + orientation);
                 if (angle >= 45 && angle < 135) {
                     // 90 cw
@@ -345,14 +365,12 @@ public class MainActivity extends AppCompatActivity
                 final long startTime = SystemClock.uptimeMillis();
                 computing = false;
 
+                // output resluts
                 final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
                 lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
                 Log.i(TAG, "Calculated");
                 String output = "Visual:\n";
                 for (Classifier.Recognition res : results) {
-                    //Log.i(TAG, "res " + res.getTitle());
-                    //int percent = (int) (res.getConfidence() * 100);
-                    //output += percent + "% " + res.getTitle() + "\n";
                     output += res.toString() + "\n";
                 }
                 output += lastProcessingTimeMs + " ms";
@@ -381,6 +399,16 @@ public class MainActivity extends AppCompatActivity
         previewWidth = width;
         previewHeight = height;
 
+        // create empty bitmaps until camera frames arrived
+        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+        Bitmap empty = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
+        mRecentFrame = new Mat(previewWidth, previewHeight, CvType.CV_8UC4);
+        Utils.bitmapToMat(empty, mRecentFrame);
+
+
+        handlerThread = new HandlerThread("inference");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper());
         startInference();
     }
 

@@ -40,7 +40,7 @@ android {
                 cppFlags "-frtti -fexceptions"
                 abiFilters "x86"
                 //abiFilters "armeabi-v7a"
-                //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"//, "armeabi", "mips", "mips64"
+                //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
             }
         }
     }
@@ -54,8 +54,9 @@ android {
             // Specifies a list of ABIs that Gradle should create APKs for.
             include "x86"
             //include "armeabi-v7a"
-            //include "x86_64", "x86", "armeabi-v7a", "arm64-v8a", "armeabi", "mips", "mips64"
-            // Specifies that we do not want to also generate a universal APK that includes all ABIs.
+            //include "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
+            // Specifies that we do not want to also generate 
+            // a universal APK that includes all ABIs.
             universalApk false
         }
     }
