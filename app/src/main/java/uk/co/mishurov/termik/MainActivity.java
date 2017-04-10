@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity
                     Log.i(TAG, "OpenCV loaded successfully");
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
-                    System.loadLibrary("native-lib");
+                    System.loadLibrary("processing");
                     _cameraBridgeViewBase.enableView();
                 }
                 break;

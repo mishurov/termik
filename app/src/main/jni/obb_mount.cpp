@@ -1,6 +1,7 @@
+#include <sys/stat.h>
+
 #include <android/storage_manager.h>
 #include <android/log.h>
-#include <sys/stat.h>
 
 #define  LOG_TAG    "Termik"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -46,6 +47,5 @@ void obb(JNIEnv *env, jobject instance) {
 	data = NULL;
 	AStorageManager_delete(man);
 	man = NULL;
-	//return 1
 }
 
