@@ -25,8 +25,14 @@ def getLibPath() {
     def ret = path + "/extras/google/market_apk_expansion/downloader_library"
     return ret
 }
-
 def libPath = getLibPath()
+
+def getZipPath() {
+    def path = getSdkDir()
+    def ret = path + "/extras/google/market_apk_expansion/zip_file"
+    return ret
+}
+def zipPath = getZipPath()
 
 android {
     compileSdkVersion 22
@@ -49,8 +55,12 @@ android {
             java {
                 srcDir "${libPath}/src"
             }
+            java {
+                srcDir "${zipPath}/src"
+            }
             res.srcDirs = [
-                "${libPath}/res"
+                "${libPath}/res",
+                "${zipPath}/res"
             ]
             aidl.srcDirs = [
                 "${libPath}/aidl"

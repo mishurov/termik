@@ -31,6 +31,8 @@ let s:project_modules = [
     \ s:sdk_root . '/extras/google/market_licensing/library/src',
     \ s:sdk_root . 
     \ '/extras/google/market_apk_expansion/downloader_library/src',
+    \ s:sdk_root . 
+    \ '/extras/google/market_apk_expansion/zip_file/src'
     \ ]
 
 " module names for intermediates

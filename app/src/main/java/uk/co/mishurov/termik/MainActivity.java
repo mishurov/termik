@@ -1,90 +1,70 @@
 package uk.co.mishurov.termik;
 
+
+import java.io.File;
+import java.util.List;
+
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.storage.OnObbStateChangeListener;
+import android.os.storage.StorageManager;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.view.Display;
+import android.view.Surface;
+import android.view.OrientationEventListener;
+import android.hardware.SensorManager;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.util.DisplayMetrics;
 
 import com.google.android.vending.expansion.downloader.Helpers;
-import com.google.android.vending.expansion.downloader.IDownloaderService;
-import com.google.android.vending.expansion.downloader.IStub;
-
-import android.hardware.SensorManager;
-import android.view.OrientationEventListener;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
-
-import android.os.Bundle;
-import android.util.Log;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.storage.OnObbStateChangeListener;
-import android.os.storage.StorageManager;
-import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
-
-import java.io.File;
-import android.util.DisplayMetrics;
+import org.opencv.core.Size;
+import org.opencv.core.Rect;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.android.Utils;
 
 import org.tensorflow.demo.Classifier;
 import org.tensorflow.demo.TensorFlowImageClassifier;
-import org.tensorflow.demo.ImageUtils;
-import android.view.Display;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Matrix;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.SystemClock;
-import java.util.List;
 
-import org.opencv.imgproc.Imgproc;
-import org.opencv.core.Size;
-import org.opencv.android.Utils;
-import org.opencv.core.Rect;
-import org.opencv.core.Core;
-import android.view.Surface;
-import org.opencv.core.CvType;
+import android.util.Log;
 
 
 public class MainActivity extends AppCompatActivity
                           implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private static final String TAG = "Termik";
-    private JavaCameraView _cameraBridgeViewBase;
 
-    OrientationEventListener mOrientationListener;
-    private int orientation = 0;
-    private ResultsView mVisuals;
-    private TextView mGuess;
-    /* obb */
+    // Orientation
+    private OrientationEventListener mOrientationListener;
+    private int mOrientation = 0;
+    private int mScreenRotation = 0;
+
+    // Assets
+    private final static String EXP_PATH = "/Android/obb/";
+    private final static int VERSION_CODE = 1;
     private static String mObbPath;
     private String mStatus;
-    private String mPath;
+    private String mMountedPath;
     private StorageManager mSM;
-    /* downloader */
-    private IStub mDownloaderClientStub;
-    private IDownloaderService mRemoteService;
-    private ProgressDialog mProgressDialog;
-    private final static String EXP_PATH = "/Android/obb/";
-    
-    /* classifier */
-    private Classifier classifier = null;
+
+    // Classification
+    private static final String VISUAL = "Visual:\n";
     private static final String MODEL_FILENAME = "/tensorflow_inception_graph.pb";
     private static final String LABEL_FILENAME = "/imagenet_comp_graph_label_strings.txt";
     private static final int INPUT_SIZE = 224;
@@ -92,19 +72,16 @@ public class MainActivity extends AppCompatActivity
     private static final float IMAGE_STD = 1;
     private static final String INPUT_NAME = "input";
     private static final String OUTPUT_NAME = "output";
-    private Bitmap rgbFrameBitmap = null;
-    private Bitmap croppedBitmap = null;
-    private Matrix frameToCropTransform;
-    private Matrix cropToFrameTransform;
-    private static final boolean MAINTAIN_ASPECT = true;
+    private Classifier mClassifier = null;
+    private Bitmap mInputBitmap = null;
+    private Mat mRecentFrame = null;
     private Handler handler;
     private HandlerThread handlerThread;
-    private long lastProcessingTimeMs;
-    private int previewWidth = 0;
-    private int previewHeight = 0;
-    private Mat mRecentFrame = null;
-    private boolean computing = false;
-    private int screenRotation = 0;
+    private int mPreviewWidth = 0;
+    private int mPreviewHeight = 0;
+    private boolean mProcessing = false;
+    private JavaCameraView mCameraView;
+    private ResultsView mVisuals;
 
     private static class XAPKFile {
         public final boolean mIsMain;
@@ -131,7 +108,6 @@ public class MainActivity extends AppCompatActivity
             String fileName = Helpers.getExpansionAPKFileName(
                 this, xf.mIsMain, xf.mFileVersion
             );
-            // Log.v(TAG, "XAPKFile name : " + fileName);
             if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) {
                 Log.e(
                     TAG,
@@ -143,7 +119,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
+    private BaseLoaderCallback mBaseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
@@ -152,7 +128,7 @@ public class MainActivity extends AppCompatActivity
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
                     System.loadLibrary("processing");
-                    _cameraBridgeViewBase.enableView();
+                    mCameraView.enableView();
                 }
                 break;
                 default: {
@@ -163,9 +139,9 @@ public class MainActivity extends AppCompatActivity
     };
 
     void setUpClassifier() {
-        String modelFile = mPath + MODEL_FILENAME;
-        String labelFile = mPath + LABEL_FILENAME;
-        classifier = TensorFlowImageClassifier.create(
+        String modelFile = mMountedPath + MODEL_FILENAME;
+        String labelFile = mMountedPath + LABEL_FILENAME;
+        mClassifier = TensorFlowImageClassifier.create(
             getAssets(),
             modelFile,
             labelFile,
@@ -180,16 +156,15 @@ public class MainActivity extends AppCompatActivity
     OnObbStateChangeListener mEventListener = new OnObbStateChangeListener() {
         @Override
         public void onObbStateChange(String path, int state) {
-            Log.d(TAG, "path=" + path + "; state=" + state);
             mStatus = String.valueOf(state);
             if (state == OnObbStateChangeListener.MOUNTED) {
-                mPath = mSM.getMountedObbPath(mObbPath);
-                Log.d(TAG, "MAUNTED =" + mPath);
-                setdir(mPath);
+                mMountedPath = mSM.getMountedObbPath(mObbPath);
+                setdir(mMountedPath);
                 setUpClassifier();
+                Log.d(TAG, "Mounted, path: " + mMountedPath);
             } else {
-                mPath = "";
-                Log.d(TAG, "NE MAUNTED =" + mPath + "state: " + state);
+                mMountedPath = "";
+                Log.d(TAG, "Mount failed, state: " + state);
             }
         }
     };
@@ -202,6 +177,15 @@ public class MainActivity extends AppCompatActivity
         );
         setContentView(R.layout.activity_main);
 
+        // Permissions for Android 6+
+        ActivityCompat.requestPermissions(
+            MainActivity.this,
+            new String[]{
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_EXTERNAL_STORAGE},
+            1
+        );
+
         // Check if expansion files are available before going any further
         if (!expansionFilesDelivered()) {
             Intent intent = new Intent(MainActivity.this, ProgressActivity.class);
@@ -212,62 +196,59 @@ public class MainActivity extends AppCompatActivity
         if (state != null) {
             mSM = state.storageManager;
             mStatus = state.status.toString();
-            mPath = state.path.toString();
+            mMountedPath = state.path.toString();
         } else {
             // Get an instance of the StorageManager
             mSM = (StorageManager) getApplicationContext().getSystemService(STORAGE_SERVICE);
         }
 
-        // Permissions for Android 6+
-        ActivityCompat.requestPermissions(
-            MainActivity.this,
-            new String[]{
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_EXTERNAL_STORAGE},
-            1
-        );
-        mObbPath = "/mnt/sdcard/Android/obb/uk.co.mishurov.termik/main.1.uk.co.mishurov.termik.obb";
+        // Get the path to the obb file
+        File root = Environment.getExternalStorageDirectory();
+        String path = root.toString() + EXP_PATH + getPackageName();
+        String filename = "main."  + VERSION_CODE + "." + getPackageName() + ".obb";
+        mObbPath = path + "/" + filename;
+
         if (mSM.mountObb(mObbPath, null, mEventListener)) {
-            Log.d(TAG, "STARING MAUNT");
+            Log.d(TAG, "Starting mounting");
         } else {
-            Log.d(TAG, "NE MAUNT");
+            Log.d(TAG, "Start of mounting failed");
         }
 
-        _cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.main_surface);
-        _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-        _cameraBridgeViewBase.setCvCameraViewListener(this);
+        mCameraView = (JavaCameraView) findViewById(R.id.main_surface);
+        mCameraView.setVisibility(SurfaceView.VISIBLE);
+        mCameraView.setCvCameraViewListener(this);
 
         Display display = getWindowManager().getDefaultDisplay();
         int rotation = display.getRotation();
         switch (rotation) {
             case Surface.ROTATION_90:
-                screenRotation = 90;
+                mScreenRotation = 90;
                 break;
             case Surface.ROTATION_180:
-                screenRotation = 180;
+                mScreenRotation = 180;
                 break;
             case Surface.ROTATION_270:
-                screenRotation = -90;
+                mScreenRotation = -90;
                 break;
             default:
-                screenRotation = 0;
+                mScreenRotation = 0;
                 break;
         }
 
         // Listen orientation
         mVisuals = (ResultsView) findViewById(R.id.linear);
-        mVisuals.setResults("Visual:\nCalculating...");
+        mVisuals.setResults(VISUAL + "Calculating...");
         mOrientationListener = new OrientationEventListener(this,
             SensorManager.SENSOR_DELAY_NORMAL) {
                 @Override
                 public void onOrientationChanged(int orientation) {
-                    orientation += screenRotation;
-                    MainActivity.this.orientation = orientation;
+                    orientation += mScreenRotation;
+                    MainActivity.this.mOrientation = orientation;
                     MainActivity.this.mVisuals.adjust(orientation);
                 }
             };
 
-        if (mOrientationListener.canDetectOrientation() == true) {
+        if (mOrientationListener.canDetectOrientation()) {
             Log.v(TAG, "Can detect orientation");
             mOrientationListener.enable();
         } else {
@@ -301,20 +282,21 @@ public class MainActivity extends AppCompatActivity
                 "Internal OpenCV library not found. Using OpenCV Manager for initialization"
             );
             OpenCVLoader.initAsync(
-                OpenCVLoader.OPENCV_VERSION_3_0_0, this, _baseLoaderCallback
+                OpenCVLoader.OPENCV_VERSION_3_0_0, this, mBaseLoaderCallback
             );
         } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
-            _baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            mBaseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
     }
 
     public void disableCamera() {
-        if (_cameraBridgeViewBase != null)
-            _cameraBridgeViewBase.disableView();
+        if (mCameraView != null)
+            mCameraView.disableView();
     }
 
     void startInference() {
@@ -322,54 +304,53 @@ public class MainActivity extends AppCompatActivity
             new Runnable() {
                 @Override
                 public void run() {
-                // wait for frame
-                Log.i(TAG, "Starting inference");
-                computing = true;
-                // crop
+                Log.d(TAG, "Starting inference image processing");
+                mProcessing = true;
+                // Crop
                 int side = 0;
                 int x = 0;
                 int y = 0;
-                if (previewHeight < previewWidth) {
-                    side = previewHeight;
-                    x = (previewWidth - side) / 2;
+                if (mPreviewHeight < mPreviewWidth) {
+                    side = mPreviewHeight;
+                    x = (mPreviewWidth - side) / 2;
                     y = 0;
                 } else {
-                    side = previewWidth;
-                    y = (previewHeight - side) / 2;
+                    side = mPreviewWidth;
+                    y = (mPreviewHeight - side) / 2;
                     x = 0;
                 }
                 Rect roi = new Rect(x, y, side, side);
-                Mat procImage = new Mat(mRecentFrame, roi);
+                Mat img = new Mat(mRecentFrame, roi);
 
-                // resize
-                Size sz = new Size(INPUT_SIZE, INPUT_SIZE);
-                Imgproc.resize(procImage, procImage, sz);
+                // Resize
+                Size size = new Size(INPUT_SIZE, INPUT_SIZE);
+                Imgproc.resize(img, img, size);
 
-                // rotate
-                int angle = orientation;
-                Log.i(TAG, "Rotation: " + orientation);
+                // Rotate
+                int angle = mOrientation;
                 if (angle >= 45 && angle < 135) {
                     // 90 cw
-                    Core.flip(procImage.t(), procImage, 1);
+                    Core.flip(img.t(), img, 1);
                 } else if (angle >= 135 && angle < 225) {
                     // 180
-                    Core.flip(procImage, procImage, -1); 
+                    Core.flip(img, img, -1); 
                 } else if (angle >= 225 && angle < 315) {
                     // 90 ccw
-                    Core.flip(procImage.t(), procImage, 0);
+                    Core.flip(img.t(), img, 0);
                 }
 
-                // convert
-                Utils.matToBitmap(procImage, croppedBitmap);
+                // Convert
+                Utils.matToBitmap(img, mInputBitmap);
 
+                mProcessing = false;
+
+                Log.d(TAG, "Starting inference");
                 final long startTime = SystemClock.uptimeMillis();
-                computing = false;
+                final List<Classifier.Recognition> results = mClassifier.recognizeImage(mInputBitmap);
+                long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
-                // output resluts
-                final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
-                lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-                Log.i(TAG, "Calculated");
-                String output = "Visual:\n";
+                // Output resluts
+                String output = VISUAL;
                 for (Classifier.Recognition res : results) {
                     output += res.toString() + "\n";
                 }
@@ -382,6 +363,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onCameraViewStarted(int width, int height) {
+        // Calculate ratio to stretch camera preview on screen
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int screenHeight = displayMetrics.heightPixels;
@@ -394,17 +376,16 @@ public class MainActivity extends AppCompatActivity
         if (height < screenHeight)
             heightRatio = (float) screenHeight / (float) height;
         ratio = (heightRatio > widthRatio) ? heightRatio : widthRatio;
-        _cameraBridgeViewBase.setScale(ratio);
+        mCameraView.setScale(ratio);
 
-        previewWidth = width;
-        previewHeight = height;
+        mPreviewWidth = width;
+        mPreviewHeight = height;
 
-        // create empty bitmaps until camera frames arrived
-        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
-        Bitmap empty = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-        mRecentFrame = new Mat(previewWidth, previewHeight, CvType.CV_8UC4);
+        // Create empty bitmaps until real camera frames arrived
+        mInputBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+        Bitmap empty = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
+        mRecentFrame = new Mat(mPreviewWidth, mPreviewHeight, CvType.CV_8UC4);
         Utils.bitmapToMat(empty, mRecentFrame);
-
 
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
@@ -417,14 +398,11 @@ public class MainActivity extends AppCompatActivity
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat image = inputFrame.rgba();
-        if (!computing)
+        if (!mProcessing)
             mRecentFrame = image.clone();
         salt(image.getNativeObjAddr());
         return image;
     }
-
-    public native void salt(long image);
-    public native double setdir(String path);
 
     public void setInference(String letters) {
         final String inference = letters;
@@ -458,5 +436,9 @@ public class MainActivity extends AppCompatActivity
             this.path = path;
         }
     }
+
+    public native void salt(long image);
+    public native double setdir(String path);
+
 }
 

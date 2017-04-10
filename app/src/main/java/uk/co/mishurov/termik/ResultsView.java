@@ -1,30 +1,25 @@
 package uk.co.mishurov.termik;
 
-import android.widget.LinearLayout;
+
 import android.content.Context;
-import android.widget.TextView;
 import android.util.AttributeSet;
-import uk.co.mishurov.termik.R;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.view.Gravity;
-import android.util.Log;
 import android.graphics.Canvas;
-import android.view.View;
-import android.widget.RelativeLayout;
-import android.graphics.Matrix;
-import android.graphics.Rect;
-import android.animation.ObjectAnimator;
+import android.util.Log;
+
 
 public class ResultsView extends FrameLayout {
     private static final String TAG = "Termik";
     private static final int MARGIN = 5;
 
-    private TextView textView;
-    private int textWidth = 0;
-    private int textHeight = 0;
-    private int diag = 0;
-    private boolean refreshing = false;
-    private int angle = 0;
+    private TextView mTextView;
+    private int mTextWidth = 0;
+    private int mTextHeight = 0;
+    private int mDiag = 0;
+    // Rotate canvas in order to prevent cropping
+    private int mAngle = 0;
 
 
     public ResultsView(Context context) {
@@ -45,13 +40,13 @@ public class ResultsView extends FrameLayout {
     }
 
     private void init(Context context) {
-        textView = new TextView(context);
-        textView.setTextAppearance(context, R.style.TermFont);
+        mTextView = new TextView(context);
+        mTextView.setTextAppearance(context, R.style.TermFont);
         // set background to fill the container for w/h calculations
-        // first 2 digits is alpha
+        // first 2 digits are alpha
         setBackgroundColor(0x01FF0000);
         int index = 0;
-        this.addView(textView, index);
+        this.addView(mTextView, index);
     }
 
     public void adjust(int rotation) {
@@ -64,8 +59,8 @@ public class ResultsView extends FrameLayout {
         double theta = Math.toRadians(-rotation);
         double cs = Math.cos(theta);
         double sn = Math.sin(theta);
-        double w = textWidth;
-        double h = textHeight;
+        double w = mTextWidth;
+        double h = mTextHeight;
 
         double bbw = Math.abs(w * cs + h * sn);
         double bbh = Math.abs(h * cs + w * sn);
@@ -74,39 +69,39 @@ public class ResultsView extends FrameLayout {
     }
 
     public void setResults(String text) {
-        textView.setText(text);
-        // calculate text dimensions
-        textView.measure(0, 0);
-        textWidth = textView.getMeasuredWidth();
-        textHeight = textView.getMeasuredHeight();
-        // prevent gravity propagation
-        textView.setGravity(Gravity.CENTER | Gravity.CENTER);
+        mTextView.setText(text);
+        // Calculate text dimensions
+        mTextView.measure(0, 0);
+        mTextWidth = mTextView.getMeasuredWidth();
+        mTextHeight = mTextView.getMeasuredHeight();
+        // Prevent gravity propagation
+        mTextView.setGravity(Gravity.CENTER | Gravity.CENTER);
 
-        // calculate diagonal length as max bounds for container
-        double w = textWidth;
-        double h = textHeight;
+        // Calculate diagonal length as max bounds for container
+        double w = mTextWidth;
+        double h = mTextHeight;
         double d = Math.sqrt(w * w + h * h);
-        diag = (int) Math.round(d);
-        diag += MARGIN;
+        mDiag = (int) Math.round(d);
+        mDiag += MARGIN;
 
-        // setup container
-        setMeasuredDimension(diag, diag);
-        setPivotX(diag/2);
-        setPivotY(diag/2);
+        // Setup container
+        setMeasuredDimension(mDiag, mDiag);
+        setPivotX(mDiag/2);
+        setPivotY(mDiag/2);
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-            diag, diag, Gravity.RIGHT|Gravity.CENTER
+            mDiag, mDiag, Gravity.RIGHT|Gravity.CENTER
         );
         setLayoutParams(params);
     }
 
     public int getAngle() {
-        return angle;
+        return mAngle;
     }
 
     public void setAngle(int angle) {
-        if (this.angle != angle) {
-            this.angle = angle;
+        if (mAngle != angle) {
+            mAngle = angle;
             requestLayout();
             invalidate();
         }
@@ -115,7 +110,7 @@ public class ResultsView extends FrameLayout {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         canvas.save();
-        canvas.rotate(-angle, getWidth() / 2f, getHeight() / 2f);
+        canvas.rotate(-mAngle, getWidth() / 2f, getHeight() / 2f);
         super.dispatchDraw(canvas);
         canvas.restore();
     }

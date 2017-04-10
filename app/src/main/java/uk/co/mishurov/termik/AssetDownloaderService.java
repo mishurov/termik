@@ -9,10 +9,11 @@ import com.google.android.vending.expansion.downloader.impl.DownloaderService;
 public class AssetDownloaderService extends DownloaderService {
     // stuff for LVL -- MODIFY FOR YOUR APPLICATION!
     private static final String BASE64_PUBLIC_KEY = "REPLACE THIS WITH YOUR PUBLIC KEY";
+
     // used by the preference obfuscater
     private static final byte[] SALT = new byte[] {
-            1, 43, -12, -1, 54, 98,
-            -100, -12, 43, 2, -8, -4, 9, 5, -106, -108, -33, 45, -1, 84
+        1, 43, -12, -1, 54, 98,
+        -100, -12, 43, 2, -8, -4, 9, 5, -106, -108, -33, 45, -1, 84
     };
 
     /**
@@ -43,5 +44,4 @@ public class AssetDownloaderService extends DownloaderService {
     public String getAlarmReceiverClassName() {
         return AlarmReceiver.class.getName();
     }
-
 }
