@@ -23,6 +23,8 @@ An example of using OpenCV and TensorFlow libraries together.
 
 ## Building on Linux
 I didn't test the build process in other OSes.
-1. Generate the necessary libraries first. Uncomment "gen-libs" in "setting.gradle" and comment the others, comment/uncomment targets and abis in "gen-libs/build.gradle" to build the OpenCV library and to download a prebuilt TensorFlow files and its sources. OpenCV need a path to Android SDK, it works with the Android tools from an SDK less than 25.3.0.
-2. Get Android's licensing library and expansion files library. Build the app, there's a graddle task, "uploadOBB", it generates and uploads .obb file onto an ADB device.
+
+* Generate the necessary libraries first. Uncomment "gen-libs" in "setting.gradle" and comment the others, comment/uncomment targets and abis in "gen-libs/build.gradle" to build the OpenCV library and to download a prebuilt TensorFlow files and its sources. OpenCV need a path to Android SDK, it works with the Android tools from an SDK less than 25.3.0.
+
+* Get Android's licensing library and expansion files library. Build the app, there's a graddle task, "uploadOBB", it generates and uploads .obb file onto an ADB device.
 
