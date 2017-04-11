@@ -2,7 +2,7 @@
 
 An example of using OpenCV and TensorFlow libraries together.
 
-![](https://mishurov.000webhostapp.com/github/termik/Screenshot1.png "")
+[![](https://mishurov.000webhostapp.com/github/termik/Screenshot1.png )](https://play.google.com/store/apps/details?id=uk.co.mishurov.termik2)
 
 [The app on Play Market](https://play.google.com/store/apps/details?id=uk.co.mishurov.termik2)
 
