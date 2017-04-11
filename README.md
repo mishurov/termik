@@ -22,7 +22,7 @@ An example of using OpenCV and TensorFlow libraries together.
 * There's the minor bug. If the .obb file is missing, the app crashes after downloading the file from Play Store. It works well after restart though.
 
 ## Building on Linux
-I didn't test the build process in other OSes.
+I didn't test the build process in other OSes. It uses CMake and Ninja build systems.
 
 * Generate the necessary libraries first. Uncomment "gen-libs" in "setting.gradle" and comment the others, comment/uncomment targets and abis in "gen-libs/build.gradle" to build the OpenCV library and to download a prebuilt TensorFlow files and its sources. OpenCV need a path to Android SDK, it works with the Android tools from an SDK less than 25.3.0.
 
