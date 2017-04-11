@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik;
+package uk.co.mishurov.termik2;
 
 
 import android.content.Context;

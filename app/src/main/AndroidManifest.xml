@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.co.mishurov.termik"
-    android:versionCode="1">
+    package="uk.co.mishurov.termik2"
+    android:versionCode="3">
+
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="25" />
 
     <!-- Required to access Android Market Licensing -->
     <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
@@ -18,16 +22,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera"/>
-    <uses-feature android:name="android.hardware.camera.autofocus"/>
-    <uses-feature android:name="android.hardware.camera.front"/>
-    <uses-feature android:name="android.hardware.camera.front.autofocus"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true"/>
 
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
         android:icon="@drawable/ic_launcher"
-        android:hardwareAccelerated="true"
         android:supportsRtl="true">
         <activity android:name=".MainActivity"
                   android:screenOrientation="landscape"

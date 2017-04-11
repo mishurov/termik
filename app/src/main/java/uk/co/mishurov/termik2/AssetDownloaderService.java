@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik;
+package uk.co.mishurov.termik2;
 
 import com.google.android.vending.expansion.downloader.impl.DownloaderService;
 
@@ -8,7 +8,7 @@ import com.google.android.vending.expansion.downloader.impl.DownloaderService;
  */
 public class AssetDownloaderService extends DownloaderService {
     // stuff for LVL -- MODIFY FOR YOUR APPLICATION!
-    private static final String BASE64_PUBLIC_KEY = "REPLACE THIS WITH YOUR PUBLIC KEY";
+    private static final String BASE64_PUBLIC_KEY = "<application public key from play store>";
 
     // used by the preference obfuscater
     private static final byte[] SALT = new byte[] {

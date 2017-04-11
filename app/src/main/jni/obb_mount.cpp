@@ -21,7 +21,7 @@ void my_obbCallbackFunc(const char* filename, const int32_t state, void* data)
 void obb(JNIEnv *env, jobject instance) {
 
 	char obbPath[256];
-	sprintf(obbPath, "/mnt/sdcard/Android/obb/uk.co.mishurov.termik/main.1.uk.co.mishurov.termik.obb");
+	sprintf(obbPath, "/mnt/sdcard/Android/obb/uk.co.mishurov.termik/main.1.uk.co.mishurov.termik2.obb");
 	struct stat sts;
 	if(stat(obbPath, &sts) == -1)
 	{

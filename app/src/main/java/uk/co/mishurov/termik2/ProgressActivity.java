@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik;
+package uk.co.mishurov.termik2;
 
 import com.android.vending.expansion.zipfile.ZipResourceFile;
 import com.android.vending.expansion.zipfile.ZipResourceFile.ZipEntryRO;
@@ -103,8 +103,8 @@ public class ProgressActivity extends AppCompatActivity implements IDownloaderCl
     private static final XAPKFile[] xAPKS = {
         new XAPKFile(
             true, // true signifies a main file
-            1, // the version of the APK that the file was uploaded against
-            54112309L // the length of the file in bytes
+            3, // the version of the APK that the file was uploaded against
+            54112310L // the length of the file in bytes
         )
     };
 
@@ -414,8 +414,7 @@ public class ProgressActivity extends AppCompatActivity implements IDownloaderCl
                     return;
                 } // otherwise, download not needed so we fall through to
                   // starting the movie
-                Intent intent = new Intent(ProgressActivity.this, MainActivity.class);
-                startActivity(intent);
+                startMainActivity();
 
             } catch (NameNotFoundException e) {
                 Log.e(TAG, "Cannot find own package! MAYDAY!");
@@ -423,7 +422,8 @@ public class ProgressActivity extends AppCompatActivity implements IDownloaderCl
             }
 
         } else {
-            validateXAPKZipFiles();
+            startMainActivity();
+            //validateXAPKZipFiles();
         }
 
     }
@@ -522,7 +522,8 @@ public class ProgressActivity extends AppCompatActivity implements IDownloaderCl
                 showDashboard = false;
                 paused = false;
                 indeterminate = false;
-                validateXAPKZipFiles();
+                startMainActivity();
+                //validateXAPKZipFiles();
                 return;
             default:
                 paused = true;
@@ -568,6 +569,11 @@ public class ProgressActivity extends AppCompatActivity implements IDownloaderCl
     protected void onDestroy() {
         this.mCancelValidation = true;
         super.onDestroy();
+    }
+
+    private void startMainActivity() {
+        Intent intent = new Intent(ProgressActivity.this, MainActivity.class);
+        startActivity(intent);
     }
 
 }

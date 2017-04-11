@@ -6,7 +6,6 @@
       <module fileurl="file://$PROJECT_DIR$/downloader/downloader.iml" filepath="$PROJECT_DIR$/downloader/downloader.iml" />
       <module fileurl="file://$PROJECT_DIR$/licensing/licensing.iml" filepath="$PROJECT_DIR$/licensing/licensing.iml" />
       <module fileurl="file://$PROJECT_DIR$/opencv/opencv.iml" filepath="$PROJECT_DIR$/opencv/opencv.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tensorflow/tensorflow.iml" filepath="$PROJECT_DIR$/tensorflow/tensorflow.iml" />
       <module fileurl="file://$PROJECT_DIR$/termik.iml" filepath="$PROJECT_DIR$/termik.iml" />
     </modules>
   </component>

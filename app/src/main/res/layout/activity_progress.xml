@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="uk.co.mishurov.termik.ProgressActivity">
+    android:gravity="center|center"
+    tools:context="uk.co.mishurov.termikc.ProgressActivity">
 
     <LinearLayout
         android:layout_width="match_parent"

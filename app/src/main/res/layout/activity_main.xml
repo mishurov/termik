@@ -7,14 +7,14 @@
     android:foregroundGravity="fill"
     android:clipChildren="false"
     android:clipToPadding="false"
-    tools:context="uk.co.mishurov.termik.MainActivity">
+    tools:context="uk.co.mishurov.termik2.MainActivity">
 
-    <uk.co.mishurov.termik.JavaCameraView
+    <uk.co.mishurov.termik2.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/main_surface" />
 
-    <uk.co.mishurov.termik.ResultsView xmlns:android="http://schemas.android.com/apk/res/android"
+    <uk.co.mishurov.termik2.ResultsView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center|center"

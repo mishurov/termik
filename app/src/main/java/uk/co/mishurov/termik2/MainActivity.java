@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik;
+package uk.co.mishurov.termik2;
 
 
 import java.io.File;
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity
 
     // Assets
     private final static String EXP_PATH = "/Android/obb/";
-    private final static int VERSION_CODE = 1;
+    private final static int VERSION_CODE = 3;
     private static String mObbPath;
     private String mStatus;
     private String mMountedPath;
@@ -98,8 +98,8 @@ public class MainActivity extends AppCompatActivity
     private static final XAPKFile[] xAPKS = {
         new XAPKFile(
             true, // true signifies a main file
-            1, // the version of the APK that the file was uploaded against
-            54112309L // the length of the file in bytes
+            3, // the version of the APK that the file was uploaded against
+            54112310L // the length of the file in bytes
         )
     };
 

@@ -15,12 +15,12 @@
 
 
 static char obbMountPath[256];
-static char guess[256];
 // Inference in a separate thread
-static std::atomic<int> isInferring(0);
-static std::thread infer;
+//static char guess[256];
+//static std::atomic<int> isInferring(0);
+//static std::thread infer;
 
-
+/*
 void getMaxClass(cv::dnn::Blob &probBlob, int *classId, double *classProb) {
 	// Reshape the blob to 1x1000 matrix
 	cv::Mat probMat = probBlob.matRefConst().reshape(1, 1);
@@ -117,7 +117,7 @@ void incept(cv::Mat img) {
 	}
 	isInferring = 0;
 }
-
+*/
 
 int lowThreshold = 65;
 int ratio = 3;
@@ -144,7 +144,7 @@ extern "C"
 {
 
 // Process the image from camera
-void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
+void JNICALL Java_uk_co_mishurov_termik2_MainActivity_salt(
 	JNIEnv *env, jobject instance, jlong image) {
 	cv::Mat &img = *(cv::Mat *) image;
 	termik(&img);
@@ -156,7 +156,7 @@ void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
 			if(infer.joinable()) {
 				infer.join();
 				jstring s = env->NewStringUTF(guess);
-				jclass activityClass = env->FindClass("uk/co/mishurov/termik/MainActivity");
+				jclass activityClass = env->FindClass("uk/co/mishurov/termik2/MainActivity");
 				jmethodID methodId = env->GetMethodID(
 					activityClass, "setInference", "(Ljava/lang/String;)V"
 				);
@@ -171,7 +171,7 @@ void JNICALL Java_uk_co_mishurov_termik_MainActivity_salt(
 }
 
 // Set mounted directory with the model
-void JNICALL Java_uk_co_mishurov_termik_MainActivity_setdir(
+void JNICALL Java_uk_co_mishurov_termik2_MainActivity_setdir(
 	JNIEnv *env, jobject instance, jstring path) {
 	strcpy(obbMountPath, (char*)env->GetStringUTFChars(path, NULL));
 }

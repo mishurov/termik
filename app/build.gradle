@@ -1,9 +1,9 @@
 import java.util.List;
 apply plugin: 'com.android.application'
 
-def verCode = 1
+def verCode = 3
 def verName = "1.0"
-def appId = "uk.co.mishurov.termik"
+def appId = "uk.co.mishurov.termik2"
 
 def getSdkDir() {
     def path
@@ -38,12 +38,17 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-frtti -fexceptions"
-                abiFilters "x86"
+                abiFilters "x86", "armeabi-v7a"
+                //abiFilters "x86"
                 //abiFilters "armeabi-v7a"
-                //abiFilters "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
             }
         }
     }
+
+    /*
+
+    // splits have to be different versions
+    // it means different obbs, too inconvenient
 
     splits {
         // Configures multiple APKs based on ABI.
@@ -52,14 +57,16 @@ android {
             // Resets the list of ABIs that Gradle should create APKs for to none.
             reset()
             // Specifies a list of ABIs that Gradle should create APKs for.
-            include "x86"
+            //include "x86"
             //include "armeabi-v7a"
-            //include "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
+            include "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
             // Specifies that we do not want to also generate 
             // a universal APK that includes all ABIs.
             universalApk false
         }
     }
+
+    */
 
     buildTypes {
         release {
@@ -129,7 +136,6 @@ task uploadOBB(type: Exec) {
     commandLine "$adb", 'push', "build/main.${verCode}.${appId}.obb", "/mnt/sdcard/Android/obb/${appId}"
 }
 
-unzipAssets.dependsOn clean
 zipAssets.dependsOn unzipAssets
 createOBBDir.dependsOn zipAssets
 uploadOBB.dependsOn createOBBDir

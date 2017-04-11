@@ -47,7 +47,7 @@ android {
         main {
             manifest.srcFile "${libPath}/AndroidManifest.xml"
             java {
-                srcDir "${libPath}/src"
+                srcDir "src"
             }
             res.srcDirs = [
                 "${libPath}/res"
