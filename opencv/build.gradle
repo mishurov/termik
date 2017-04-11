@@ -36,4 +36,8 @@ android {
             renderscript.srcDirs = []
         }
     }
+
+    lintOptions {
+        abortOnError false
+    }
 }

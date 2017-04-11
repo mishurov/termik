@@ -2,5 +2,4 @@
 include ':opencv'
 include ':downloader'
 include ':licensing'
-include ':tensorflow'
 include ':app'
