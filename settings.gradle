@@ -1,5 +1,2 @@
-//include ':gen-libs'
-include ':opencv'
-include ':downloader'
-include ':licensing'
 include ':app'
+include ':opencv'

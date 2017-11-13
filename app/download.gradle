@@ -1,0 +1,77 @@
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'de.undercouch:gradle-download-task:3.2.0'
+    }
+}
+
+
+def items = [
+    'https://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip',
+    'https://sourceforge.net/projects/opencvlibrary/files/opencv-android/3.3.1/opencv-3.3.1-android-sdk.zip'
+]
+
+def modelFiles = [
+    'imagenet_comp_graph_label_strings.txt',
+    'tensorflow_inception_graph.pb'
+]
+
+import de.undercouch.gradle.tasks.download.Download
+
+
+task downloadFiles(type: Download) {
+
+    for (item in items) {
+        src item
+    }
+
+    dest new File(project.ext.DOWNLOAD_DIR)
+    overwrite true
+}
+
+
+task extractFiles(type: Copy) {
+
+    for (item in items) {
+        def localFile = item.split("/")[-1]
+        from zipTree(project.ext.DOWNLOAD_DIR + '/' + localFile)
+    }
+
+    into file(project.ext.DOWNLOAD_DIR)
+    fileMode  0644
+    exclude '**/LICENSE'
+
+    for (f in modelFiles) {
+        copy {
+            from project.ext.DOWNLOAD_DIR + '/' + f
+            into project.ext.ASSET_DIR
+        }
+    }
+
+    def needDownload = false
+    for (item in items) {
+        def localFile = item.split("/")[-1]
+        if (!(new File(project.ext.DOWNLOAD_DIR + '/' + localFile)).exists()) {
+            needDownload = true
+        }
+    }
+
+    if (needDownload) {
+        dependsOn downloadFiles
+    }
+
+}
+
+
+tasks.whenTaskAdded { task ->
+    if (task.name == 'assembleDebug') {
+        task.dependsOn 'extractFiles'
+    }
+    if (task.name == 'assembleRelease') {
+        task.dependsOn 'extractFiles'
+    }
+}
+

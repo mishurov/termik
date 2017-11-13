@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
-android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+def SDK_PATH = "../downloads/OpenCV-android-sdk/sdk/java"
 
+android {
+    compileSdkVersion 26
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 25
+        minSdkVersion 21
+        targetSdkVersion 26
     }
 
     buildTypes {
@@ -18,22 +18,19 @@ android {
 
     sourceSets {
         main {
-            manifest.srcFile '../distribution/opencv/sdk/java/AndroidManifest.xml'
+            manifest.srcFile "$SDK_PATH" + '/AndroidManifest.xml'
             java {
-                srcDir '../distribution/opencv/sdk/java/src'
+                srcDir "$SDK_PATH" + '/src'
             }
             res.srcDirs = [
-                '../distribution/opencv/sdk/java/res'
+                "$SDK_PATH" + '/res'
             ]
             aidl.srcDirs = [
-                '../distribution/opencv/sdk/java/src'
+                "$SDK_PATH" + '/src'
             ]
             assets.srcDirs = [
-                '../distribution/opencv/sdk/java/src/assets'
+                "$SDK_PATH" + '/assets'
             ]
-            jniLibs.srcDirs = []
-            resources.srcDirs = []
-            renderscript.srcDirs = []
         }
     }
 

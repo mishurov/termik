@@ -1,9 +1,4 @@
 <resources>
-    <style name="LoadTheme" parent="Theme.AppCompat">
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="colorAccent">#ff0000</item>
-    </style>
     <style name="CamTheme" parent="Theme.AppCompat">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>

@@ -1,73 +1,25 @@
-import java.util.List;
 apply plugin: 'com.android.application'
 
-def verCode = 3
-def verName = "1.0"
-def appId = "uk.co.mishurov.termik2"
+apply plugin: 'kotlin-android'
 
-def getSdkDir() {
-    def path
-    def localProperties = new File("local.properties")
-    if (localProperties.exists()) {
-        Properties properties = new Properties()
-        localProperties.withInputStream { instr ->
-            properties.load(instr)
-        }
-        def sdkDir = properties.getProperty('sdk.dir')
-        if (sdkDir) {
-            path = sdkDir
-        } else {
-            path = "$System.env.ANDROID_HOME"
-        }
-    } else {
-        path = "$System.env.ANDROID_HOME"
-    }
-    return path
-}
+apply plugin: 'kotlin-android-extensions'
+
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 26
     defaultConfig {
-        applicationId appId
-        minSdkVersion 19
-        targetSdkVersion 25
-        versionCode verCode
-        versionName verName
+        applicationId "uk.co.mishurov.termik2"
+        minSdkVersion 21
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags "-frtti -fexceptions"
-                abiFilters "x86", "armeabi-v7a"
-                //abiFilters "x86"
-                //abiFilters "armeabi-v7a"
-            }
+        ndk {
+            //abiFilters "armeabi-v7a"
+            abiFilters "x86"
+            //abiFilters "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
         }
     }
-
-    /*
-
-    // splits have to be different versions
-    // it means different obbs, too inconvenient
-
-    splits {
-        // Configures multiple APKs based on ABI.
-        abi {
-            enable true
-            // Resets the list of ABIs that Gradle should create APKs for to none.
-            reset()
-            // Specifies a list of ABIs that Gradle should create APKs for.
-            //include "x86"
-            //include "armeabi-v7a"
-            include "x86_64", "x86", "armeabi-v7a", "arm64-v8a"
-            // Specifies that we do not want to also generate 
-            // a universal APK that includes all ABIs.
-            universalApk false
-        }
-    }
-
-    */
-
     buildTypes {
         release {
             minifyEnabled false
@@ -79,9 +31,6 @@ android {
             path "CMakeLists.txt"
         }
     }
-    lintOptions {
-        abortOnError false
-    }
     sourceSets {
         main {
             java {
@@ -92,63 +41,28 @@ android {
                 'src/main/res'
             ]
             jniLibs.srcDirs = [
-                '../distribution/opencv/sdk/native/libs',
-                '../distribution/tensorflow/out/native/libtensorflow_demo.so',
-                '../distribution/tensorflow/out/native/libtensorflow_inference.so',
+                '../downloads/OpenCV-android-sdk/sdk/native/libs',
             ]
-            assets.srcDirs = ['src/main/assets']
-            resources.srcDirs = []
-            aidl.srcDirs = []
-            renderscript.srcDirs = []
+            assets.srcDirs = ['assets']
         }
     }
 }
 
 
-task unzipAssets(type: Copy) {
-    from(zipTree('../distribution/tensorflow/out/tensorflow_demo.apk')) {
-        include 'assets/tensorflow_inception_graph.pb'
-        include 'assets/imagenet_comp_graph_label_strings.txt'
-    }
-    into 'build'
-}
+project.ext.DOWNLOAD_DIR = project.rootDir.toString() + '/downloads'
+project.ext.ASSET_DIR = projectDir.toString() + '/assets'
+apply from: "download.gradle"
 
-task zipAssets(type: Exec) {
-    workingDir "build"
-    def filename = "main.${verCode}.${appId}.obb"
-    commandLine "jobb", "-d", "./assets", "-o", "${filename}", "-pn", "${appId}", "-pv", "${verCode}"
-    standardOutput = new ByteArrayOutputStream()
-}
-
-
-def getADBPath() {
-    def path = getSdkDir()
-    def adb = path + "/platform-tools/adb"
-    adb
-}
-
-task createOBBDir(type: Exec) {
-    def adb = getADBPath();
-    commandLine "$adb", 'shell', 'mkdir', '-p', "/mnt/sdcard/Android/obb/${appId}"
-}
-task uploadOBB(type: Exec) {
-    def adb = getADBPath();
-    commandLine "$adb", 'push', "build/main.${verCode}.${appId}.obb", "/mnt/sdcard/Android/obb/${appId}"
-}
-
-zipAssets.dependsOn unzipAssets
-createOBBDir.dependsOn zipAssets
-uploadOBB.dependsOn createOBBDir
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile fileTree(dir: '../distribution/tensorflow/out/', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:25.+'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile project(':downloader')
-    compile project(':opencv')
-    testCompile 'junit:junit:4.12'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "com.android.support:appcompat-v7:26.0.0"
+
+    implementation 'org.tensorflow:tensorflow-android:1.4.0'
+    implementation project(':opencv')
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 }
