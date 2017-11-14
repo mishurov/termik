@@ -2,6 +2,11 @@ package uk.co.mishurov.termik2
 
 
 import java.io.File
+import java.io.BufferedInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 import android.Manifest
 import android.content.Intent
@@ -18,10 +23,15 @@ import android.view.Display
 import android.view.Surface
 import android.view.OrientationEventListener
 import android.hardware.SensorManager
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.graphics.Bitmap
 import android.graphics.Bitmap.Config
 import android.util.DisplayMetrics
 import android.content.res.AssetManager
+import android.preference.PreferenceManager
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
@@ -29,11 +39,16 @@ import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Mat
 import org.opencv.core.Size
+import org.opencv.core.Scalar
 import org.opencv.core.Rect
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.imgproc.Imgproc
 import org.opencv.android.Utils
+
+import org.opencv.dnn.Net
+import org.opencv.dnn.Dnn
+//import org.opencv.dnn.Blob
 
 import org.tensorflow.classifier.Classifier
 import org.tensorflow.classifier.TensorFlowImageClassifier
@@ -47,10 +62,13 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
 
     // Orientation
     private var mOrientationListener: OrientationEventListener? = null
+    private var mListener: OnSharedPreferenceChangeListener? = null
+    private var mPrefs: SharedPreferences? = null
+    private var mEnginePref : Int = 0
+    private var mOutputPref : Int = 0
     private var mOrientation = 0
     private var mScreenRotation = 0
-    private var mStatus: String? = null
-    private var mMountedPath: String? = null
+
     private var mClassifier: Classifier? = null
     private var mInputBitmap: Bitmap? = null
     private var mRecentFrame: Mat? = null
@@ -61,6 +79,12 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     private var mProcessing = false
     private var mCameraView: JavaCameraView? = null
     private var mVisuals: ResultsView? = null
+    private var mGestureDetector: GestureDetector? = null
+
+    private var mNet: Net? = null
+    private var mLabels: List<String>? = null
+    private var mInputMat: Mat? = null
+
 
     private val mBaseLoaderCallback = object : BaseLoaderCallback(this) {
         override fun onManagerConnected(status: Int) {
@@ -70,6 +94,12 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
                     System.loadLibrary("processing")
+                    setPrefs(mPrefs!!)
+                    if (mEnginePref == 0) {
+                        setUpTensorFlow()
+                    } else {
+                        setUpOpenCvDnn()
+                    }
                     mCameraView?.enableView()
                 }
                 else -> {
@@ -79,7 +109,58 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         }
     }
 
-    private fun setUpClassifier() {
+    private fun getPath(file: String): String {
+
+        val assetManager: AssetManager = getAssets()
+        var inputStream: BufferedInputStream?
+
+        //try {
+            val actual_file = file.split("file:///android_asset/")[1]
+            inputStream = BufferedInputStream(assetManager.open(actual_file))
+
+            val file_data: ByteArray = inputStream.readBytes()
+
+            inputStream.read(file_data)
+            inputStream.close()
+
+            val outFile : File = File(getFilesDir(), actual_file)
+
+            val os : FileOutputStream = FileOutputStream(outFile)
+            os.write(file_data)
+            os.close()
+
+            return outFile.getAbsolutePath()
+
+        //} catch (e: IOException) {
+        //    Log.i(TAG, "Failed to open NN file")
+        //}
+
+        //return ""
+    }
+
+    private fun readLabels(file: String) {
+        val assetManager: AssetManager = getAssets()
+        var inputStream: BufferedInputStream?
+
+        //try {
+            val actual_file = file.split("file:///android_asset/")[1]
+            inputStream = BufferedInputStream(assetManager.open(actual_file))
+            val reader = inputStream.bufferedReader()
+            mLabels = reader.readLines()
+
+        //} catch (e: IOException) {
+        //    Log.i(TAG, "Failed to open labels file")
+        //}
+        //return null
+    }
+
+    private fun setUpOpenCvDnn() {
+        mNet = Dnn.readNetFromTensorflow(getPath(MODEL_FILENAME))
+        readLabels(LABEL_FILENAME)
+    }
+
+
+    private fun setUpTensorFlow() {
         mClassifier = TensorFlowImageClassifier.create(
                 getAssets(),
                 MODEL_FILENAME,
@@ -99,16 +180,23 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         )
         setContentView(R.layout.activity_main)
 
-        // Permissions for Android 6+
-        // arrayOf(Manifest.permission.CAMERA,
-        //    Manifest.permission.READ_EXTERNAL_STORAGE),
         ActivityCompat.requestPermissions(
                 this@MainActivity,
                 arrayOf(Manifest.permission.CAMERA),
                 1
         )
 
-        setUpClassifier()
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        mListener = object : OnSharedPreferenceChangeListener {
+            override fun onSharedPreferenceChanged(prefs: SharedPreferences,
+                                                   key: String) {
+                setPrefs(prefs)
+            }
+        }
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        mPrefs?.registerOnSharedPreferenceChangeListener(mListener)
+
 
         mCameraView = findViewById<JavaCameraView>(R.id.main_surface)
 
@@ -144,10 +232,11 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
             Log.v(TAG, "Cannot detect orientation")
             mOrientationListener?.disable()
         }
+        mGestureDetector = GestureDetector(this, GestureListener())
 
     }
 
-    @Synchronized public override fun onPause() {
+    override fun onPause() {
         handlerThread!!.quitSafely()
         try {
             handlerThread!!.join()
@@ -156,12 +245,11 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         } catch (e: InterruptedException) {
             Log.e(TAG, "Exception!" + e.toString())
         }
-
         super.onPause()
         disableCamera()
     }
 
-    @Synchronized public override fun onResume() {
+    override fun onResume() {
         super.onResume()
         if (!OpenCVLoader.initDebug()) {
             Log.d(
@@ -188,6 +276,35 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
             mCameraView?.disableView()
     }
 
+    private fun openCvInference(): MutableList<String> {
+        Imgproc.cvtColor(mInputMat, mInputMat, Imgproc.COLOR_RGBA2RGB);
+        val size = Size(INPUT_SIZE.toDouble(), INPUT_SIZE.toDouble())
+        val mean = Scalar(
+            IMAGE_MEAN.toDouble(),
+            IMAGE_MEAN.toDouble(),
+            IMAGE_MEAN.toDouble()
+        )
+        val blob = Dnn.blobFromImage(mInputMat, 1.0, size, mean, true, true)
+
+        mNet?.setInput(blob, INPUT_NAME)
+        //val outputName = "softmax2"
+	var result = mNet?.forward()
+        result = result?.reshape(1, 1)
+
+        var indices = result?.clone()
+        Core.sortIdx(result, indices, Core.SORT_DESCENDING)
+
+        var output: MutableList<String> = ArrayList()
+        for (i in 0..4) {
+            val index = indices?.get(0, i)?.get(0)!!.toInt()
+            val label = mLabels!![index]
+            val probability = result?.get(0, index)?.get(0)
+            val probStr = "%.1f".format(probability?.times(100))
+            output.add(label + " (" + probStr + "%)")
+        }
+        return output
+    }
+
     private fun startInference() {
         runInBackground(
                 Runnable {
@@ -207,42 +324,49 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
                         x = 0
                     }
                     val roi = Rect(x, y, side, side)
-                    val img = Mat(mRecentFrame, roi)
+                    mInputMat = Mat(mRecentFrame, roi)
 
                     // Resize
                     val size = Size(
                         INPUT_SIZE.toDouble(), INPUT_SIZE.toDouble()
                     )
-                    Imgproc.resize(img, img, size)
+                    Imgproc.resize(mInputMat!!, mInputMat, size)
 
                     // Rotate
                     val angle = mOrientation
                     if (angle >= 45 && angle < 135) {
                         // 90 cw
-                        Core.flip(img.t(), img, 1)
+                        Core.flip(mInputMat!!.t(), mInputMat, 1)
                     } else if (angle >= 135 && angle < 225) {
                         // 180
-                        Core.flip(img, img, -1)
+                        Core.flip(mInputMat!!, mInputMat, -1)
                     } else if (angle >= 225 && angle < 315) {
                         // 90 ccw
-                        Core.flip(img.t(), img, 0)
+                        Core.flip(mInputMat!!.t(), mInputMat, 0)
                     }
 
                     // Convert
-                    Utils.matToBitmap(img, mInputBitmap)
+                    Utils.matToBitmap(mInputMat!!, mInputBitmap)
 
                     mProcessing = false
 
                     Log.d(TAG, "Starting inference")
                     val startTime = SystemClock.uptimeMillis()
-                    val results = mClassifier?.recognizeImage(mInputBitmap)
+
+                    var output = VISUAL
+
+                    if (mEnginePref == 0) {
+                        val results = mClassifier?.recognizeImage(mInputBitmap)
+                        for (res in results!!) {
+                            output += res.toString().split("]")[1] + "\n"
+                        }
+                    } else {
+                        val results = openCvInference()
+                        for (res in results) output += res + "\n"
+                    }
+
                     val lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime
 
-                    // Output resluts
-                    var output = VISUAL
-                    for (res in results!!) {
-                        output += res.toString() + "\n"
-                    }
                     output += lastProcessingTimeMs.toString() + " ms"
 
                     setInference(output)
@@ -256,7 +380,7 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         val screenHeight = displayMetrics.heightPixels
         val screenWidth = displayMetrics.widthPixels
-        var ratio = 0f
+        var ratio : Float
         var heightRatio = 0f
         var widthRatio = 0f
         if (width < screenWidth)
@@ -293,8 +417,16 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         val image = inputFrame.rgba()
         if (!mProcessing)
             mRecentFrame = image.clone()
-        salt(image.nativeObjAddr)
+        process(image.nativeObjAddr)
         return image
+    }
+
+    fun setPrefs(prefs: SharedPreferences) {
+        val engine : String = prefs.getString("engine_preference", "")
+        mEnginePref = engine.toInt()
+        val output : String = prefs.getString("output_preference", "")
+        mOutputPref = output.toInt()
+        setprefs(mOutputPref)
     }
 
     fun setInference(letters: String) {
@@ -312,8 +444,24 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         disableCamera()
     }
 
-    external fun salt(image: Long)
-    external fun setdir(path: String?): Double
+    override fun onTouchEvent(touchevent: MotionEvent): Boolean {
+        return mGestureDetector?.onTouchEvent(touchevent) as Boolean
+    }
+
+    private inner class GestureListener
+                            : GestureDetector.SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            val intent = Intent(
+                    this@MainActivity,
+                    SettingsActivity::class.java
+            )
+            startActivity(intent)
+            return true
+        }
+    }
+
+    external fun process(image: Long)
+    external fun setprefs(output: Int)
 
     companion object {
 
