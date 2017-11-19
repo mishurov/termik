@@ -16,22 +16,34 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
 import android.support.v4.app.ActivityCompat
-import android.support.v7.app.AppCompatActivity
-import android.view.SurfaceView
+//import android.support.v7.app.AppCompatActivity
 import android.view.WindowManager
 import android.view.Display
-import android.view.Surface
 import android.view.OrientationEventListener
 import android.hardware.SensorManager
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.graphics.Bitmap
 import android.graphics.Bitmap.Config
+import android.graphics.SurfaceTexture
 import android.util.DisplayMetrics
 import android.content.res.AssetManager
 import android.preference.PreferenceManager
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+
+import android.view.TextureView
+//import android.view.TextureView.SurfaceTextureListener
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect as Rect2
+
+import com.google.vr.sdk.base.GvrActivity
+import com.google.vr.sdk.base.GvrView
 
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
@@ -58,7 +70,9 @@ import uk.co.mishurov.termik2.opencv.JavaCameraView
 import android.util.Log
 
 
-class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListener2 {
+class MainActivity : GvrActivity(),
+                    GvrRenderer.GvrRendererEvents,
+                    CameraBridgeViewBase.CvCameraViewListener2 {
 
     // Orientation
     private var mOrientationListener: OrientationEventListener? = null
@@ -69,9 +83,6 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     private var mOrientation = 0
     private var mScreenRotation = 0
 
-    private var mClassifier: Classifier? = null
-    private var mInputBitmap: Bitmap? = null
-    private var mRecentFrame: Mat? = null
     private var handler: Handler? = null
     private var handlerThread: HandlerThread? = null
     private var mPreviewWidth = 0
@@ -81,10 +92,18 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     private var mVisuals: ResultsView? = null
     private var mGestureDetector: GestureDetector? = null
 
+    private var mInputBitmap: Bitmap? = null
+    private var mRecentFrame: Mat? = null
+    // TensorFlow
+    private var mClassifier: Classifier? = null
+    // OpenCV DNN
     private var mNet: Net? = null
     private var mLabels: List<String>? = null
     private var mInputMat: Mat? = null
 
+    // VR
+    private var gvrRenderer: GvrRenderer? = null
+    private var surfaceTexture: SurfaceTexture? = null
 
     private val mBaseLoaderCallback = object : BaseLoaderCallback(this) {
         override fun onManagerConnected(status: Int) {
@@ -94,7 +113,6 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
                     System.loadLibrary("processing")
-                    setPrefs(mPrefs!!)
                     if (mEnginePref == 0) {
                         setUpTensorFlow()
                     } else {
@@ -175,10 +193,10 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
         window.addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         )
-        setContentView(R.layout.activity_main)
 
         ActivityCompat.requestPermissions(
                 this@MainActivity,
@@ -193,15 +211,13 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
                 setPrefs(prefs)
             }
         }
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-
         mPrefs?.registerOnSharedPreferenceChangeListener(mListener)
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
+        setPrefs(mPrefs!!)
 
 
-        mCameraView = findViewById<JavaCameraView>(R.id.main_surface)
 
-        mCameraView?.setVisibility(SurfaceView.VISIBLE)
-        mCameraView?.setCvCameraViewListener(this)
+        mGestureDetector = GestureDetector(this, GestureListener())
 
         val display = windowManager.defaultDisplay
         val rotation = display.rotation
@@ -214,7 +230,29 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
 
         // Listen orientation
         mVisuals = findViewById<ResultsView>(R.id.linear)
-        mVisuals!!.setResults(VISUAL + "Calculating...")
+        mVisuals?.setResults(VISUAL + "Calculating...")
+
+        mCameraView = findViewById<JavaCameraView>(R.id.main_surface)
+        mCameraView?.setCvCameraViewListener(this)
+
+        gvrView = findViewById<GvrView>(R.id.vr_surface)
+
+        gvrRenderer = GvrRenderer(gvrView!!, this)
+        setGvrView(gvrView!!)
+
+        if (mOutputPref == 1) {
+            var parent = mCameraView?.getParent() as ViewGroup
+            parent.removeView(mCameraView!!)
+            gvrView?.addView(mCameraView!!)
+            gvrView?.setVisibility(SurfaceView.VISIBLE)
+
+            //parent = gvrView?.getParent() as ViewGroup
+            //parent.removeView(gvrView!!)
+            //setContentView(gvrView)
+        } else {
+            gvrView?.setVisibility(SurfaceView.GONE)
+        }
+
         mOrientationListener = object : OrientationEventListener(this,
                 SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
@@ -232,11 +270,10 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
             Log.v(TAG, "Cannot detect orientation")
             mOrientationListener?.disable()
         }
-        mGestureDetector = GestureDetector(this, GestureListener())
-
     }
 
     override fun onPause() {
+        gvrView!!.onPause()
         handlerThread!!.quitSafely()
         try {
             handlerThread!!.join()
@@ -250,6 +287,7 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     }
 
     override fun onResume() {
+        gvrView!!.onResume()
         super.onResume()
         if (!OpenCVLoader.initDebug()) {
             Log.d(
@@ -277,7 +315,7 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     }
 
     private fun openCvInference(): MutableList<String> {
-        Imgproc.cvtColor(mInputMat, mInputMat, Imgproc.COLOR_RGBA2RGB);
+        Imgproc.cvtColor(mInputMat, mInputMat, Imgproc.COLOR_RGBA2RGB)
         val size = Size(INPUT_SIZE.toDouble(), INPUT_SIZE.toDouble())
         val mean = Scalar(
             IMAGE_MEAN.toDouble(),
@@ -288,7 +326,7 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
 
         mNet?.setInput(blob, INPUT_NAME)
         //val outputName = "softmax2"
-	var result = mNet?.forward()
+        var result = mNet?.forward()
         result = result?.reshape(1, 1)
 
         var indices = result?.clone()
@@ -393,7 +431,6 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         mPreviewWidth = width
         mPreviewHeight = height
 
-        // Create empty bitmaps until real camera frames arrived
         mInputBitmap = Bitmap.createBitmap(
             INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888
         )
@@ -402,6 +439,7 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         )
         mRecentFrame = Mat(mPreviewWidth, mPreviewHeight, CvType.CV_8UC4)
         Utils.bitmapToMat(empty, mRecentFrame)
+
 
         handlerThread = HandlerThread("inference")
         handlerThread?.start()
@@ -412,12 +450,27 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
     override fun onCameraViewStopped() {}
 
     override fun onCameraFrame(
-                    inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat
+                    inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat?
     {
         val image = inputFrame.rgba()
         if (!mProcessing)
             mRecentFrame = image.clone()
         process(image.nativeObjAddr)
+
+        if (mOutputPref == 1 && surfaceTexture != null) {
+            var surface = Surface(surfaceTexture)
+            var canvas = surface.lockCanvas(null)
+            var bmp = Bitmap.createBitmap(
+                mPreviewWidth, mPreviewHeight, Config.ARGB_8888
+            )
+            Utils.matToBitmap(image, bmp)
+            canvas?.drawBitmap(bmp, 0.0f, 0.0f, null)
+            mVisuals?.draw(canvas!!)
+
+            surface.unlockCanvasAndPost(canvas!!)
+            surface.release()
+        }
+
         return image
     }
 
@@ -426,7 +479,6 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         mEnginePref = engine.toInt()
         val output : String = prefs.getString("output_preference", "")
         mOutputPref = output.toInt()
-        setprefs(mOutputPref)
     }
 
     fun setInference(letters: String) {
@@ -460,8 +512,17 @@ class MainActivity : AppCompatActivity(), CameraBridgeViewBase.CvCameraViewListe
         }
     }
 
+    override fun onSurfaceTextureCreated(tex: SurfaceTexture) {
+        this.surfaceTexture = tex
+    }
+
+    override fun onBackPressed() {
+    }
+
+    override fun onCardboardTrigger() {
+    }
+
     external fun process(image: Long)
-    external fun setprefs(output: Int)
 
     companion object {
 

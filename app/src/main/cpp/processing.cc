@@ -31,14 +31,7 @@ void Termik(cv::Mat *display_img)
 
 	cv::cvtColor(img, img, CV_GRAY2RGBA);
 	cv::cvtColor(edges, edges, CV_GRAY2RGBA);
-	cv::Scalar color;
-
-	if (g_output_pref == 0) {
-		color = cv::Scalar(1, 0.2, 0.2, 1);
-	} else {
-		color = cv::Scalar(0.2, 1, 0.2, 1);
-	}
-
+	cv::Scalar color = cv::Scalar(1, 0.2, 0.2, 1);
 	img = img.mul(color);
 	*display_img = img + edges;
 }
@@ -54,13 +47,6 @@ void JNICALL Java_uk_co_mishurov_termik2_MainActivity_process(
 	Termik(&img);
 
 }
-
-void JNICALL Java_uk_co_mishurov_termik2_MainActivity_setprefs(
-				JNIEnv * env, jobject obj, jint output)
-{
-	g_output_pref = output;
-}
-
 
 } // extern C
 

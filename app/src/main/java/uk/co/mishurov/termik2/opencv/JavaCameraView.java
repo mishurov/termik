@@ -11,6 +11,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
+import android.view.SurfaceHolder;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.BuildConfig;
@@ -44,6 +45,8 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     private SurfaceTexture mSurfaceTexture;
     private int mPreviewFormat = ImageFormat.NV21;
 
+    private SurfaceHolder mHolder;
+
     public static class JavaCameraSizeAccessor implements ListItemAccessor {
 
         @Override
@@ -65,6 +68,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
 
     public JavaCameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mHolder = getHolder();
     }
 
     protected boolean initializeCamera(int width, int height) {
@@ -200,7 +204,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     mCameraFrame[1] = new JavaCameraFrame(mFrameChain[1], mFrameWidth, mFrameHeight);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                        mSurfaceTexture = new SurfaceTexture(MAGIC_TEXTURE_ID);
+                        //mSurfaceTexture = new SurfaceTexture(MAGIC_TEXTURE_ID);
                         mCamera.setPreviewTexture(mSurfaceTexture);
                     } else
                        mCamera.setPreviewDisplay(null);
@@ -374,4 +378,26 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     public void setScale(float scale) {
         mScale = scale;
     }
+
+    public SurfaceTexture getTexture() {
+        return mSurfaceTexture;
+    }
+
+    public SurfaceHolder getTexHolder() {
+        return mHolder;
+    }
+
+    public void setTexture(SurfaceTexture tex) {
+        mSurfaceTexture = tex;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            try {
+                mCamera.stopPreview();
+                mCamera.setPreviewTexture(mSurfaceTexture);
+                mCamera.startPreview();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

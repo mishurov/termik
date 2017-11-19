@@ -58,6 +58,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation "com.android.support:appcompat-v7:26.0.0"
+    implementation 'com.google.vr:sdk-base:1.101.0'
 
     implementation 'org.tensorflow:tensorflow-android:1.4.0'
     implementation project(':opencv')
