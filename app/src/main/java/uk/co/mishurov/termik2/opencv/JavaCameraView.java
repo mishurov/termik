@@ -204,7 +204,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     mCameraFrame[1] = new JavaCameraFrame(mFrameChain[1], mFrameWidth, mFrameHeight);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                        //mSurfaceTexture = new SurfaceTexture(MAGIC_TEXTURE_ID);
+                        mSurfaceTexture = new SurfaceTexture(MAGIC_TEXTURE_ID);
                         mCamera.setPreviewTexture(mSurfaceTexture);
                     } else
                        mCamera.setPreviewDisplay(null);
@@ -378,26 +378,4 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     public void setScale(float scale) {
         mScale = scale;
     }
-
-    public SurfaceTexture getTexture() {
-        return mSurfaceTexture;
-    }
-
-    public SurfaceHolder getTexHolder() {
-        return mHolder;
-    }
-
-    public void setTexture(SurfaceTexture tex) {
-        mSurfaceTexture = tex;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            try {
-                mCamera.stopPreview();
-                mCamera.setPreviewTexture(mSurfaceTexture);
-                mCamera.startPreview();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 }

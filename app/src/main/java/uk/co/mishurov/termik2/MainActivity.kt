@@ -36,11 +36,14 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.view.TextureView
 //import android.view.TextureView.SurfaceTextureListener
 import android.view.Surface
+import android.view.View
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect as Rect2
+import android.graphics.PixelFormat
 
 import com.google.vr.sdk.base.GvrActivity
 import com.google.vr.sdk.base.GvrView
@@ -58,6 +61,7 @@ import org.opencv.core.CvType
 import org.opencv.imgproc.Imgproc
 import org.opencv.android.Utils
 
+
 import org.opencv.dnn.Net
 import org.opencv.dnn.Dnn
 //import org.opencv.dnn.Blob
@@ -71,7 +75,6 @@ import android.util.Log
 
 
 class MainActivity : GvrActivity(),
-                    GvrRenderer.GvrRendererEvents,
                     CameraBridgeViewBase.CvCameraViewListener2 {
 
     // Orientation
@@ -103,7 +106,6 @@ class MainActivity : GvrActivity(),
 
     // VR
     private var gvrRenderer: GvrRenderer? = null
-    private var surfaceTexture: SurfaceTexture? = null
 
     private val mBaseLoaderCallback = object : BaseLoaderCallback(this) {
         override fun onManagerConnected(status: Int) {
@@ -194,10 +196,11 @@ class MainActivity : GvrActivity(),
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        /*
         window.addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         )
-
+        */
         ActivityCompat.requestPermissions(
                 this@MainActivity,
                 arrayOf(Manifest.permission.CAMERA),
@@ -214,8 +217,6 @@ class MainActivity : GvrActivity(),
         mPrefs?.registerOnSharedPreferenceChangeListener(mListener)
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
         setPrefs(mPrefs!!)
-
-
 
         mGestureDetector = GestureDetector(this, GestureListener())
 
@@ -237,19 +238,15 @@ class MainActivity : GvrActivity(),
 
         gvrView = findViewById<GvrView>(R.id.vr_surface)
 
-        gvrRenderer = GvrRenderer(gvrView!!, this)
+        gvrRenderer = GvrRenderer(gvrView!!)
         setGvrView(gvrView!!)
-
         if (mOutputPref == 1) {
             var parent = mCameraView?.getParent() as ViewGroup
             parent.removeView(mCameraView!!)
             gvrView?.addView(mCameraView!!)
             gvrView?.setVisibility(SurfaceView.VISIBLE)
-
-            //parent = gvrView?.getParent() as ViewGroup
-            //parent.removeView(gvrView!!)
-            //setContentView(gvrView)
         } else {
+            gvrView.setStereoModeEnabled(false)
             gvrView?.setVisibility(SurfaceView.GONE)
         }
 
@@ -457,18 +454,14 @@ class MainActivity : GvrActivity(),
             mRecentFrame = image.clone()
         process(image.nativeObjAddr)
 
-        if (mOutputPref == 1 && surfaceTexture != null) {
-            var surface = Surface(surfaceTexture)
-            var canvas = surface.lockCanvas(null)
+        if (mOutputPref == 1) {
             var bmp = Bitmap.createBitmap(
                 mPreviewWidth, mPreviewHeight, Config.ARGB_8888
             )
             Utils.matToBitmap(image, bmp)
-            canvas?.drawBitmap(bmp, 0.0f, 0.0f, null)
-            mVisuals?.draw(canvas!!)
-
-            surface.unlockCanvasAndPost(canvas!!)
-            surface.release()
+            val c = Canvas(bmp)
+            mVisuals?.draw(c)
+            gvrRenderer?.setBmp(bmp)
         }
 
         return image
@@ -510,10 +503,6 @@ class MainActivity : GvrActivity(),
             startActivity(intent)
             return true
         }
-    }
-
-    override fun onSurfaceTextureCreated(tex: SurfaceTexture) {
-        this.surfaceTexture = tex
     }
 
     override fun onBackPressed() {

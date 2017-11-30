@@ -11,7 +11,7 @@
         android:layout_height="fill_parent"
         android:id="@+id/main_surface" />
 
-    <uk.co.mishurov.termik2.ResultsView xmlns:android="http://schemas.android.com/apk/res/android"
+    <uk.co.mishurov.termik2.ResultsView
         android:gravity="center|center"
         android:clipChildren="false"
         android:clipToPadding="false"
@@ -21,9 +21,10 @@
 
     <com.google.vr.sdk.base.GvrView
         android:id="@+id/vr_surface"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true" />
+
 </FrameLayout>
 
