@@ -37,11 +37,13 @@ import android.view.TextureView
 //import android.view.TextureView.SurfaceTextureListener
 import android.view.Surface
 import android.view.View
+import android.widget.FrameLayout.LayoutParams
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.text.TextPaint
 import android.graphics.Rect as Rect2
 import android.graphics.PixelFormat
 
@@ -69,12 +71,11 @@ import org.opencv.dnn.Dnn
 import org.tensorflow.classifier.Classifier
 import org.tensorflow.classifier.TensorFlowImageClassifier
 
-import uk.co.mishurov.termik2.opencv.JavaCameraView
-
 import android.util.Log
 
 
 class MainActivity : GvrActivity(),
+                    View.OnTouchListener,
                     CameraBridgeViewBase.CvCameraViewListener2 {
 
     // Orientation
@@ -90,8 +91,10 @@ class MainActivity : GvrActivity(),
     private var handlerThread: HandlerThread? = null
     private var mPreviewWidth = 0
     private var mPreviewHeight = 0
+    private var mScreenWidth = 0
+    private var mScreenHeight = 0
     private var mProcessing = false
-    private var mCameraView: JavaCameraView? = null
+    private var mCameraView: KotlinCameraView? = null
     private var mVisuals: ResultsView? = null
     private var mGestureDetector: GestureDetector? = null
 
@@ -115,11 +118,13 @@ class MainActivity : GvrActivity(),
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
                     System.loadLibrary("processing")
+                    /*
                     if (mEnginePref == 0) {
                         setUpTensorFlow()
                     } else {
                         setUpOpenCvDnn()
                     }
+                    */
                     mCameraView?.enableView()
                 }
                 else -> {
@@ -230,24 +235,49 @@ class MainActivity : GvrActivity(),
         }
 
         // Listen orientation
-        mVisuals = findViewById<ResultsView>(R.id.linear)
+        mVisuals = findViewById<ResultsView>(R.id.results)
         mVisuals?.setResults(VISUAL + "Calculating...")
 
-        mCameraView = findViewById<JavaCameraView>(R.id.main_surface)
+        mCameraView = findViewById<KotlinCameraView>(R.id.camera)
         mCameraView?.setCvCameraViewListener(this)
 
-        gvrView = findViewById<GvrView>(R.id.vr_surface)
 
+        gvrView = findViewById<GvrView>(R.id.vr)
+        if (mOutputPref == 2) {
+            gvrView?.setDistortionCorrectionEnabled(false)
+        }
+
+        gvrView?.setEGLConfigChooser(8, 8, 8, 8, 0, 0)
         gvrRenderer = GvrRenderer(gvrView!!)
         setGvrView(gvrView!!)
-        if (mOutputPref == 1) {
+        if (mOutputPref != 0) {
+
             var parent = mCameraView?.getParent() as ViewGroup
             parent.removeView(mCameraView!!)
             gvrView?.addView(mCameraView!!)
             gvrView?.setVisibility(SurfaceView.VISIBLE)
+            gvrView?.setOnTouchListener(this)
         } else {
             gvrView.setStereoModeEnabled(false)
             gvrView?.setVisibility(SurfaceView.GONE)
+        }
+
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        mScreenWidth = displayMetrics.widthPixels
+        mScreenHeight = displayMetrics.heightPixels
+
+        if (mOutputPref != 0) {
+            val camParams = mCameraView!!.getLayoutParams()
+            camParams.width = mScreenWidth
+            camParams.height = mScreenHeight * 2
+            mCameraView?.setLayoutParams(camParams)
+
+            val visParams = mVisuals!!.getLayoutParams()
+            visParams.width = mScreenWidth / 2
+            visParams.height = mScreenHeight
+            mVisuals?.setLayoutParams(visParams)
+            mVisuals?.setVrStyle()
         }
 
         mOrientationListener = object : OrientationEventListener(this,
@@ -411,17 +441,13 @@ class MainActivity : GvrActivity(),
 
     override fun onCameraViewStarted(width: Int, height: Int) {
         // Calculate ratio to stretch camera preview on screen
-        val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val screenHeight = displayMetrics.heightPixels
-        val screenWidth = displayMetrics.widthPixels
         var ratio : Float
         var heightRatio = 0f
         var widthRatio = 0f
-        if (width < screenWidth)
-            widthRatio = screenWidth.toFloat() / width.toFloat()
-        if (height < screenHeight)
-            heightRatio = screenHeight.toFloat() / height.toFloat()
+        if (width < mScreenWidth)
+            widthRatio = mScreenWidth.toFloat() / width.toFloat()
+        if (height < mScreenHeight)
+            heightRatio = mScreenHeight.toFloat() / height.toFloat()
         ratio = if (heightRatio > widthRatio) heightRatio else widthRatio
         mCameraView!!.setScale(ratio)
 
@@ -437,11 +463,10 @@ class MainActivity : GvrActivity(),
         mRecentFrame = Mat(mPreviewWidth, mPreviewHeight, CvType.CV_8UC4)
         Utils.bitmapToMat(empty, mRecentFrame)
 
-
         handlerThread = HandlerThread("inference")
         handlerThread?.start()
         handler = Handler(handlerThread?.looper)
-        startInference()
+        //startInference()
     }
 
     override fun onCameraViewStopped() {}
@@ -454,14 +479,33 @@ class MainActivity : GvrActivity(),
             mRecentFrame = image.clone()
         process(image.nativeObjAddr)
 
-        if (mOutputPref == 1) {
+        if (mOutputPref > 0) {
+            Log.i(TAG, "Preview " + mPreviewWidth.toString() + " " + mPreviewHeight.toString())
+            Log.i(TAG, "Screen " + mScreenWidth.toString() + " " + mScreenHeight.toString())
             var bmp = Bitmap.createBitmap(
                 mPreviewWidth, mPreviewHeight, Config.ARGB_8888
             )
             Utils.matToBitmap(image, bmp)
-            val c = Canvas(bmp)
-            mVisuals?.draw(c)
+
+            bmp = Bitmap.createBitmap(
+               bmp, mScreenWidth / 4, 0, mScreenWidth / 2, mScreenHeight
+            )
+
+            var vis = Bitmap.createBitmap(
+                mScreenWidth / 2, mScreenHeight, Config.ARGB_8888
+            )
+            //vis.eraseColor(Color.argb(128, 255, 255, 255))
+            val c = Canvas(vis)
+            //mVisuals?.draw(c)
+            //mVisuals?.setDrawingCacheEnabled(true)
+            //vis = mVisuals?.getDrawingCache()
+            val textPaint = TextPaint();
+            textPaint.setTextSize(25.0f);
+            textPaint.setARGB(255, 255, 255, 255)
+            c.drawText("Test visuals", 250.0f, 400.0f, textPaint)
+
             gvrRenderer?.setBmp(bmp)
+            gvrRenderer?.setVis(vis)
         }
 
         return image
@@ -489,8 +533,14 @@ class MainActivity : GvrActivity(),
         disableCamera()
     }
 
-    override fun onTouchEvent(touchevent: MotionEvent): Boolean {
-        return mGestureDetector?.onTouchEvent(touchevent) as Boolean
+    override fun onTouchEvent(me: MotionEvent): Boolean
+    {
+        return mGestureDetector?.onTouchEvent(me) as Boolean
+    }
+
+    override fun onTouch(v: View, me: MotionEvent): Boolean
+    {
+        return mGestureDetector?.onTouchEvent(me) as Boolean
     }
 
     private inner class GestureListener

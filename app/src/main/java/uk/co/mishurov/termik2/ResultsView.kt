@@ -10,8 +10,11 @@ import android.graphics.Canvas
 import android.util.Log
 
 
-class ResultsView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0, defStyleRes: Int = 0) : FrameLayout(context, attrs, defStyleAttr, defStyleRes) {
-
+class ResultsView @JvmOverloads constructor(
+    context: Context, attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0, defStyleRes: Int = 0)
+        : FrameLayout(context, attrs, defStyleAttr, defStyleRes)
+{
     private var mTextView: TextView? = null
     private var mTextWidth = 0
     private var mTextHeight = 0
@@ -32,7 +35,6 @@ class ResultsView @JvmOverloads constructor(context: Context, attrs: AttributeSe
 
     private fun init(context: Context) {
         mTextView = TextView(context)
-        //mTextView?.setTextAppearance(context, R.style.TermFont)
         mTextView?.setTextAppearance(R.style.TermFont)
         // set background to fill the container for w/h calculations
         // first 2 digits are alpha
@@ -43,21 +45,10 @@ class ResultsView @JvmOverloads constructor(context: Context, attrs: AttributeSe
 
     fun adjust(rotation: Int) {
         angle = rotation
+    }
 
-        /*
-
-        // Bounding Box dimensions
-
-        double theta = Math.toRadians(-rotation);
-        double cs = Math.cos(theta);
-        double sn = Math.sin(theta);
-        double w = mTextWidth;
-        double h = mTextHeight;
-
-        double bbw = Math.abs(w * cs + h * sn);
-        double bbh = Math.abs(h * cs + w * sn);
-
-        */
+    fun setVrStyle() {
+        mTextView?.setTextAppearance(R.style.TermFontVR)
     }
 
     fun setResults(text: String) {
@@ -95,7 +86,7 @@ class ResultsView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     }
 
     companion object {
-        private val TAG = "Termik"
+        private val TAG = "Termik 2"
         private val MARGIN = 5
     }
 }

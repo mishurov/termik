@@ -6,10 +6,11 @@
     android:layout_height="match_parent"
     tools:context="uk.co.mishurov.termik2.MainActivity">
 
-    <uk.co.mishurov.termik2.opencv.JavaCameraView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/main_surface" />
+    <uk.co.mishurov.termik2.KotlinCameraView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal|top"
+        android:id="@+id/camera" />
 
     <uk.co.mishurov.termik2.ResultsView
         android:gravity="center|center"
@@ -17,10 +18,10 @@
         android:clipToPadding="false"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/linear" />
+        android:id="@+id/results" />
 
     <com.google.vr.sdk.base.GvrView
-        android:id="@+id/vr_surface"
+        android:id="@+id/vr"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"

@@ -12,13 +12,15 @@
     </string-array>
 
     <string-array name="Output">
-        <item>Screen</item>
-        <item>VR</item>
+        <item>Mono</item>
+        <item>Stereo with distortion</item>
+        <item>Stereo without distortion</item>
     </string-array>
 
     <string-array name="OutputData">
         <item>0</item>
         <item>1</item>
+        <item>2</item>
     </string-array>
 
 </resources>

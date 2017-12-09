@@ -16,4 +16,9 @@
         <item name="android:textSize">15sp</item>
     </style>
 
+    <style name="TermFontVR">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">10sp</item>
+    </style>
+
 </resources>
