@@ -5,47 +5,30 @@ import java.io.File
 import java.io.BufferedInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 import android.Manifest
-import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
 import android.support.v4.app.ActivityCompat
-//import android.support.v7.app.AppCompatActivity
 import android.view.WindowManager
-import android.view.Display
 import android.view.OrientationEventListener
-import android.hardware.SensorManager
+import android.view.Surface
+import android.view.View
+import android.view.SurfaceView
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ViewGroup
+import android.hardware.SensorManager
 import android.graphics.Bitmap
-import android.graphics.Bitmap.Config
-import android.graphics.SurfaceTexture
-import android.util.DisplayMetrics
-import android.content.res.AssetManager
-import android.preference.PreferenceManager
+import android.graphics.Canvas
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
-
-import android.view.TextureView
-//import android.view.TextureView.SurfaceTextureListener
-import android.view.Surface
-import android.view.View
-import android.widget.FrameLayout.LayoutParams
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.text.TextPaint
-import android.graphics.Rect as Rect2
-import android.graphics.PixelFormat
+import android.content.res.AssetManager
+import android.preference.PreferenceManager
+import android.util.DisplayMetrics
 
 import com.google.vr.sdk.base.GvrActivity
 import com.google.vr.sdk.base.GvrView
@@ -54,6 +37,7 @@ import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.core.Scalar
@@ -61,12 +45,9 @@ import org.opencv.core.Rect
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.imgproc.Imgproc
-import org.opencv.android.Utils
-
 
 import org.opencv.dnn.Net
 import org.opencv.dnn.Dnn
-//import org.opencv.dnn.Blob
 
 import org.tensorflow.classifier.Classifier
 import org.tensorflow.classifier.TensorFlowImageClassifier
@@ -74,10 +55,9 @@ import org.tensorflow.classifier.TensorFlowImageClassifier
 import android.util.Log
 
 
-class MainActivity : GvrActivity(),
-                    View.OnTouchListener,
-                    CameraBridgeViewBase.CvCameraViewListener2 {
-
+class MainActivity : GvrActivity(), View.OnTouchListener,
+                            CameraBridgeViewBase.CvCameraViewListener2
+{
     // Orientation
     private var mOrientationListener: OrientationEventListener? = null
     private var mListener: OnSharedPreferenceChangeListener? = null
@@ -110,21 +90,23 @@ class MainActivity : GvrActivity(),
     // VR
     private var gvrRenderer: GvrRenderer? = null
 
-    private val mBaseLoaderCallback = object : BaseLoaderCallback(this) {
-        override fun onManagerConnected(status: Int) {
+    private val mBaseLoaderCallback = object : BaseLoaderCallback(this)
+    {
+        override fun onManagerConnected(status: Int)
+        {
             when (status) {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i(TAG, "OpenCV loaded successfully")
                     // Load ndk built module, as specified in moduleName in build.gradle
                     // after opencv initialization
                     System.loadLibrary("processing")
-                    /*
+
                     if (mEnginePref == 0) {
                         setUpTensorFlow()
                     } else {
                         setUpOpenCvDnn()
                     }
-                    */
+
                     mCameraView?.enableView()
                 }
                 else -> {
@@ -139,7 +121,7 @@ class MainActivity : GvrActivity(),
         val assetManager: AssetManager = getAssets()
         var inputStream: BufferedInputStream?
 
-        //try {
+        try {
             val actual_file = file.split("file:///android_asset/")[1]
             inputStream = BufferedInputStream(assetManager.open(actual_file))
 
@@ -156,27 +138,26 @@ class MainActivity : GvrActivity(),
 
             return outFile.getAbsolutePath()
 
-        //} catch (e: IOException) {
-        //    Log.i(TAG, "Failed to open NN file")
-        //}
+        } catch (e: IOException) {
+            Log.i(TAG, "Failed to open NN file")
+        }
 
-        //return ""
+        return ""
     }
 
     private fun readLabels(file: String) {
         val assetManager: AssetManager = getAssets()
         var inputStream: BufferedInputStream?
 
-        //try {
+        try {
             val actual_file = file.split("file:///android_asset/")[1]
             inputStream = BufferedInputStream(assetManager.open(actual_file))
             val reader = inputStream.bufferedReader()
             mLabels = reader.readLines()
 
-        //} catch (e: IOException) {
-        //    Log.i(TAG, "Failed to open labels file")
-        //}
-        //return null
+        } catch (e: IOException) {
+            Log.i(TAG, "Failed to open labels file")
+        }
     }
 
     private fun setUpOpenCvDnn() {
@@ -201,11 +182,9 @@ class MainActivity : GvrActivity(),
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        /*
         window.addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         )
-        */
         ActivityCompat.requestPermissions(
                 this@MainActivity,
                 arrayOf(Manifest.permission.CAMERA),
@@ -455,10 +434,10 @@ class MainActivity : GvrActivity(),
         mPreviewHeight = height
 
         mInputBitmap = Bitmap.createBitmap(
-            INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888
+            INPUT_SIZE, INPUT_SIZE, Bitmap.Config.ARGB_8888
         )
         val empty = Bitmap.createBitmap(
-            mPreviewWidth, mPreviewHeight, Config.ARGB_8888
+            mPreviewWidth, mPreviewHeight, Bitmap.Config.ARGB_8888
         )
         mRecentFrame = Mat(mPreviewWidth, mPreviewHeight, CvType.CV_8UC4)
         Utils.bitmapToMat(empty, mRecentFrame)
@@ -466,7 +445,7 @@ class MainActivity : GvrActivity(),
         handlerThread = HandlerThread("inference")
         handlerThread?.start()
         handler = Handler(handlerThread?.looper)
-        //startInference()
+        startInference()
     }
 
     override fun onCameraViewStopped() {}
@@ -480,10 +459,8 @@ class MainActivity : GvrActivity(),
         process(image.nativeObjAddr)
 
         if (mOutputPref > 0) {
-            Log.i(TAG, "Preview " + mPreviewWidth.toString() + " " + mPreviewHeight.toString())
-            Log.i(TAG, "Screen " + mScreenWidth.toString() + " " + mScreenHeight.toString())
             var bmp = Bitmap.createBitmap(
-                mPreviewWidth, mPreviewHeight, Config.ARGB_8888
+                mPreviewWidth, mPreviewHeight, Bitmap.Config.ARGB_8888
             )
             Utils.matToBitmap(image, bmp)
 
@@ -492,17 +469,11 @@ class MainActivity : GvrActivity(),
             )
 
             var vis = Bitmap.createBitmap(
-                mScreenWidth / 2, mScreenHeight, Config.ARGB_8888
+                mScreenWidth / 2, mScreenHeight, Bitmap.Config.ARGB_8888
             )
             //vis.eraseColor(Color.argb(128, 255, 255, 255))
             val c = Canvas(vis)
-            //mVisuals?.draw(c)
-            //mVisuals?.setDrawingCacheEnabled(true)
-            //vis = mVisuals?.getDrawingCache()
-            val textPaint = TextPaint();
-            textPaint.setTextSize(25.0f);
-            textPaint.setARGB(255, 255, 255, 255)
-            c.drawText("Test visuals", 250.0f, 400.0f, textPaint)
+            mVisuals?.drawText(c)
 
             gvrRenderer?.setBmp(bmp)
             gvrRenderer?.setVis(vis)

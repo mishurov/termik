@@ -3,7 +3,9 @@
     package="uk.co.mishurov.termik2">
 
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera" android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -31,6 +33,9 @@
             </intent-filter>
         </activity>
     </application>
+
+    <uses-feature android:glEsVersion="0x00020000"
+                  android:required="false" />
 
     <supports-screens android:resizeable="true"
                       android:smallScreens="true"

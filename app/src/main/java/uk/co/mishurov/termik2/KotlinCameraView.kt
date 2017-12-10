@@ -14,7 +14,6 @@ import org.opencv.android.CameraBridgeViewBase
 import org.opencv.BuildConfig
 import org.opencv.core.CvType
 import org.opencv.core.Mat
-import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
 
@@ -61,19 +60,30 @@ class KotlinCameraView : CameraBridgeViewBase, PreviewCallback
                 try {
                     mCamera = Camera.open()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Camera is not available (in use or does not exist): " + e.localizedMessage)
+                    Log.e(
+                        TAG,
+                        "Camera is not available (in use or does not exist): " +
+                        e.localizedMessage
+                    )
                 }
 
                 if (mCamera == null && Build.VERSION.SDK_INT >=
                     Build.VERSION_CODES.GINGERBREAD) {
                     var connected = false
                     for (camIdx in 0 until Camera.getNumberOfCameras()) {
-                        Log.d(TAG, "Trying to open camera with new open(" + Integer.valueOf(camIdx) + ")")
+                        Log.d(
+                            TAG, "Trying to open camera with new open(" +
+                            Integer.valueOf(camIdx) + ")"
+                        )
                         try {
                             mCamera = Camera.open(camIdx)
                             connected = true
                         } catch (e: RuntimeException) {
-                            Log.e(TAG, "Camera #" + camIdx + "failed to open: " + e.localizedMessage)
+                            Log.e(
+                                TAG, "Camera #" +
+                                camIdx + "failed to open: "
+                                + e.localizedMessage
+                            )
                         }
 
                         if (connected) break
@@ -108,11 +118,17 @@ class KotlinCameraView : CameraBridgeViewBase, PreviewCallback
                     } else if (localCameraIndex == CameraBridgeViewBase.CAMERA_ID_FRONT) {
                         Log.e(TAG, "Front camera not found!")
                     } else {
-                        Log.d(TAG, "Trying to open camera with new open(" + Integer.valueOf(localCameraIndex) + ")")
+                        Log.d(
+                            TAG, "Trying to open camera with new open(" +
+                            Integer.valueOf(localCameraIndex) + ")"
+                        )
                         try {
                             mCamera = Camera.open(localCameraIndex)
                         } catch (e: RuntimeException) {
-                            Log.e(TAG, "Camera #" + localCameraIndex + "failed to open: " + e.localizedMessage)
+                            Log.e(
+                                TAG, "Camera #" + localCameraIndex +
+                                "failed to open: " + e.localizedMessage
+                            )
                         }
 
                     }
@@ -133,14 +149,20 @@ class KotlinCameraView : CameraBridgeViewBase, PreviewCallback
                     )
 
                     if (Build.BRAND.equals("generic", ignoreCase = true) ||
-                        Build.BRAND.equals("Android", ignoreCase = true))
-                        params.previewFormat = ImageFormat.YV12  // "generic" or "android" = android emulator
-                    else
+                        Build.BRAND.equals("Android", ignoreCase = true)) {
+                        params.previewFormat = ImageFormat.YV12
+                        // "generic" or "android" = android emulator
+                    } else {
                         params.previewFormat = ImageFormat.NV21
+                    }
 
                     mPreviewFormat = params.previewFormat
 
-                    Log.d(TAG, "Set preview size to " + Integer.valueOf(frameSize.width.toInt()) + "x" + Integer.valueOf(frameSize.height.toInt()))
+                    Log.d(
+                        TAG, "Set preview size to " +
+                        Integer.valueOf(frameSize.width.toInt()) +
+                        "x" + Integer.valueOf(frameSize.height.toInt())
+                    )
                     params.setPreviewSize(
                         frameSize.width.toInt(), frameSize.height.toInt()
                     )
@@ -336,9 +358,10 @@ class KotlinCameraView : CameraBridgeViewBase, PreviewCallback
         }
     }
 
-    private inner class CameraWorker : Runnable {
-
-        override fun run() {
+    private inner class CameraWorker : Runnable
+    {
+        override fun run()
+        {
             do {
                 var hasFrame = false
                 synchronized(this@KotlinCameraView) {
@@ -366,12 +389,13 @@ class KotlinCameraView : CameraBridgeViewBase, PreviewCallback
         }
     }
 
-    fun setScale(scale: Float) {
+    fun setScale(scale: Float)
+    {
         mScale = scale
     }
 
-    companion object {
-
+    companion object
+    {
         private val MAGIC_TEXTURE_ID = 10
         private val TAG = "KotlinCameraView"
     }

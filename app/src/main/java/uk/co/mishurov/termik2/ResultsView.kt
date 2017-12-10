@@ -1,27 +1,29 @@
 package uk.co.mishurov.termik2
 
-
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.view.Gravity
 import android.graphics.Canvas
+
 import android.util.Log
 
-
-class ResultsView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0, defStyleRes: Int = 0)
-        : FrameLayout(context, attrs, defStyleAttr, defStyleRes)
+class ResultsView @JvmOverloads constructor(context: Context,
+                                    attrs: AttributeSet? = null,
+                                    defStyleAttr: Int = 0,
+                                    defStyleRes: Int = 0)
+                    : FrameLayout(context, attrs, defStyleAttr, defStyleRes)
 {
     private var mTextView: TextView? = null
     private var mTextWidth = 0
     private var mTextHeight = 0
     private var mDiag = 0
+
     // Rotate canvas in order to prevent cropping
     var angle = 0
-        set(angle) {
+        set(angle)
+        {
             if (this.angle != angle) {
                 field = angle
                 requestLayout()
@@ -33,25 +35,27 @@ class ResultsView @JvmOverloads constructor(
         init(context)
     }
 
-    private fun init(context: Context) {
+    private fun init(context: Context)
+    {
         mTextView = TextView(context)
         mTextView?.setTextAppearance(R.style.TermFont)
-        // set background to fill the container for w/h calculations
-        // first 2 digits are alpha
         setBackgroundColor(0x01FF0000)
         val index = 0
         this.addView(mTextView, index)
     }
 
-    fun adjust(rotation: Int) {
+    fun adjust(rotation: Int)
+    {
         angle = rotation
     }
 
-    fun setVrStyle() {
+    fun setVrStyle()
+    {
         mTextView?.setTextAppearance(R.style.TermFontVR)
     }
 
-    fun setResults(text: String) {
+    fun setResults(text: String)
+    {
         mTextView!!.text = text
         // Calculate text dimensions
         mTextView!!.measure(0, 0)
@@ -78,15 +82,25 @@ class ResultsView @JvmOverloads constructor(
         layoutParams = params
     }
 
-    override fun dispatchDraw(canvas: Canvas) {
+    fun drawText(c: Canvas)
+    {
+        val x = (c.getWidth() - mDiag).toFloat()
+        val y = (c.getHeight() - mDiag).toFloat()
+        c.translate(x, y)
+        draw(c)
+    }
+
+    override fun dispatchDraw(canvas: Canvas)
+    {
         canvas.save()
-        canvas.rotate((-angle).toFloat(), width / 2f, height / 2f)
+        canvas.rotate((-angle).toFloat(), width / 2.0f, height / 2.0f)
         super.dispatchDraw(canvas)
         canvas.restore()
     }
 
-    companion object {
-        private val TAG = "Termik 2"
+    companion object
+    {
+        private val TAG = "Termik 2 ResultsView"
         private val MARGIN = 5
     }
 }
