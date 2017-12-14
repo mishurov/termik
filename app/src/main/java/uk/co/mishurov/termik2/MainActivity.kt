@@ -464,8 +464,19 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
             )
             Utils.matToBitmap(image, bmp)
 
+            val ratio = mScreenHeight.toFloat() / mPreviewHeight.toFloat()
+
+            bmp = Bitmap.createScaledBitmap(
+               bmp,
+               (mPreviewWidth * ratio).toInt() + 1,
+               (mPreviewHeight * ratio).toInt() + 1,
+               true
+            )
+
+            val offset = (mPreviewWidth * ratio - mScreenWidth * 0.5f) * 0.5f
+
             bmp = Bitmap.createBitmap(
-               bmp, mScreenWidth / 4, 0, mScreenWidth / 2, mScreenHeight
+               bmp, offset.toInt(), 0, mScreenWidth / 2, mScreenHeight
             )
 
             var vis = Bitmap.createBitmap(
