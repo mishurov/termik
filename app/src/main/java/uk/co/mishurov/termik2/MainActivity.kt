@@ -23,6 +23,7 @@ import android.view.ViewGroup
 import android.hardware.SensorManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.PixelFormat
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -230,10 +231,6 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
         gvrRenderer = GvrRenderer(gvrView!!)
         setGvrView(gvrView!!)
         if (mOutputPref != 0) {
-
-            var parent = mCameraView?.getParent() as ViewGroup
-            parent.removeView(mCameraView!!)
-            gvrView?.addView(mCameraView!!)
             gvrView?.setVisibility(SurfaceView.VISIBLE)
             gvrView?.setOnTouchListener(this)
         } else {
@@ -251,6 +248,11 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
             camParams.width = mScreenWidth
             camParams.height = mScreenHeight * 2
             mCameraView?.setLayoutParams(camParams)
+
+            // make view trasparent since the image is rendered in GvrView
+            mCameraView?.setZOrderOnTop(true)
+            val holder = mCameraView?.getHolder()
+            holder?.setFormat(PixelFormat.TRANSPARENT)
 
             val visParams = mVisuals!!.getLayoutParams()
             visParams.width = mScreenWidth / 2
@@ -420,14 +422,17 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
 
     override fun onCameraViewStarted(width: Int, height: Int) {
         // Calculate ratio to stretch camera preview on screen
-        var ratio : Float
-        var heightRatio = 0f
-        var widthRatio = 0f
-        if (width < mScreenWidth)
+        var heightRatio = 0.0f
+        var widthRatio = 0.0f
+
+        if (width < mScreenWidth) {
             widthRatio = mScreenWidth.toFloat() / width.toFloat()
-        if (height < mScreenHeight)
+        }
+        if (height < mScreenHeight) {
             heightRatio = mScreenHeight.toFloat() / height.toFloat()
-        ratio = if (heightRatio > widthRatio) heightRatio else widthRatio
+        }
+
+        val ratio = if (heightRatio > widthRatio) heightRatio else widthRatio
         mCameraView!!.setScale(ratio)
 
         mPreviewWidth = width
@@ -490,7 +495,7 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
             gvrRenderer?.setVis(vis)
         }
 
-        return image
+        return if (mOutputPref > 0) null else image
     }
 
     fun setPrefs(prefs: SharedPreferences) {
@@ -537,12 +542,13 @@ class MainActivity : GvrActivity(), View.OnTouchListener,
         }
     }
 
+/*
     override fun onBackPressed() {
     }
 
     override fun onCardboardTrigger() {
     }
-
+*/
     external fun process(image: Long)
 
     companion object {

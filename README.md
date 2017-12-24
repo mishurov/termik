@@ -1,4 +1,4 @@
-# Termik 2
+# Termik
 
 An example of using OpenCV and TensorFlow libraries together. Camera passthrugh into GvrView.
 
