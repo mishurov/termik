@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik2
+package uk.co.mishurov.termik
 
 import android.content.Context
 import android.util.AttributeSet
@@ -100,7 +100,7 @@ class ResultsView @JvmOverloads constructor(context: Context,
 
     companion object
     {
-        private val TAG = "Termik 2 ResultsView"
+        private val TAG = "Termik ResultsView"
         private val MARGIN = 5
     }
 }

@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik2
+package uk.co.mishurov.termik
 
 import android.os.Bundle
 import android.content.Intent
@@ -41,6 +41,6 @@ class SettingsActivity : PreferenceActivity()
 
     companion object
     {
-        private val TAG = "Termik 2 SettingsActivity"
+        private val TAG = "Termik SettingsActivity"
     }
 }

@@ -1,4 +1,4 @@
-package uk.co.mishurov.termik2
+package uk.co.mishurov.termik
 
 import android.opengl.GLES20
 

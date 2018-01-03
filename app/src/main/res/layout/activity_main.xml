@@ -4,15 +4,15 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="uk.co.mishurov.termik2.MainActivity">
+    tools:context="uk.co.mishurov.termik.MainActivity">
 
-    <uk.co.mishurov.termik2.KotlinCameraView
+    <uk.co.mishurov.termik.KotlinCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal|top"
         android:id="@+id/camera" />
 
-    <uk.co.mishurov.termik2.ResultsView
+    <uk.co.mishurov.termik.ResultsView
         android:gravity="center|center"
         android:clipChildren="false"
         android:clipToPadding="false"

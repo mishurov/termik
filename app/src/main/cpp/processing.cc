@@ -40,7 +40,7 @@ void Termik(cv::Mat *display_img)
 extern "C"
 {
 
-void JNICALL Java_uk_co_mishurov_termik2_MainActivity_process(
+void JNICALL Java_uk_co_mishurov_termik_MainActivity_process(
 				JNIEnv *env, jobject instance, jlong image)
 {
 	cv::Mat &img = *(cv::Mat *) image;
